@@ -1,12 +1,15 @@
 import React, { useState } from 'react';
 import InfoCard from '../auth/InfoCard.jsx';
 import { FcGoogle } from "react-icons/fc";
+import { useNavigate } from 'react-router-dom';
+import Logo from '../../components/Logo.jsx';
 
 // Assuming Tailwind CSS setup in your project (e.g., via PostCSS/Vite/Next.js)
 // We remove the import '../../index.css'; as styling is now inline via Tailwind classes.
 
 function Login() {
   // 1. STATE MANAGEMENT
+  const navigate = useNavigate();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -30,35 +33,27 @@ function Login() {
 
   // 3. FORM SUBMISSION HANDLER (Same mock logic as before)
   const handleSubmit = async (e) => {
-    e.preventDefault();
+  e.preventDefault();
 
-    if (!validateForm()) {
-      return;
+  if (!validateForm()) return;
+
+  setIsLoading(true);
+  setError('');
+
+  try {
+    await new Promise(resolve => setTimeout(resolve, 1500));
+
+    if (email === 'test@user.com' && password === 'correctpassword') {
+      navigate('/dashboard');
+    } else {
+      throw new Error('Invalid login credentials provided.');
     }
-
-    setIsLoading(true);
-    setError('');
-
-    try {
-      const loginData = { email, password };
-      console.log('Frontend preparing to send:', loginData);
-
-      // --- Mock Backend Interaction ---
-      await new Promise(resolve => setTimeout(resolve, 1500)); 
-
-      if (email === 'test@user.com' && password === 'correctpassword') {
-        console.log('SUCCESS! Redirecting user...');
-        alert('Login Successful!');
-      } else {
-        throw new Error('Invalid login credentials provided.');
-      }
-    } catch (err) {
-      console.error('Login failed:', err);
-      setError(err.message || 'Network error occurred. Try again.');
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  } catch (err) {
+    setError(err.message || 'Network error occurred. Try again.');
+  } finally {
+    setIsLoading(false);
+  }
+};
 
   // 4. JSX (UI Rendering with Tailwind CSS Classes)
   return (
@@ -75,14 +70,12 @@ function Login() {
             
             {/* Logo & Header */}
             <div className="flex items-center justify-center mb-6">
-              <span className="text-3xl mr-2 text-indigo-600">💠</span>
-              <h1 className="text-2xl text-center font-bold text-gray-800">
-                Trakly
-              </h1>
+              <span className="text-3xl w-20 mr-2 text-indigo-600" ><Logo iconSizeClasses="h-20 w-20"></Logo></span>
+              
             </div>
             
             <h2 className="font-bold text-4xl text-gray-900 text-center mb-2">
-              Welcome to Trakly
+              Welcome to <span className='text-blue-500'>Trakly</span>
             </h2>
             <p className="text-sm text-gray-500 mb-8 text-center">
               Your ultimate competitive programming companion.
