@@ -1,6 +1,6 @@
-import { UserModel } from "../../model/userModel.js";
+import { UserModel } from "../../models/userModel.js";
 
-export const signup = async (req, res) => {
+const signup = async (req, res) => {
     try {
         const { name, email, password } = req.body;
 
@@ -58,3 +58,5 @@ export const signup = async (req, res) => {
         });
     }
 };
+
+export default signup

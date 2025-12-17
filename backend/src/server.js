@@ -2,7 +2,7 @@ import express from 'express'
 import cors from 'cors'
 import dotenv from 'dotenv'
 import connectDB from './db/index.js'
-//import router from './routes/index.js'
+import router from './routes/index.js'
 import cookieParser from "cookie-parser"
 
 dotenv.config({
@@ -22,7 +22,7 @@ app.use(cors({
 app.use(cookieParser());
 
 //api
-//app.use('/api',router)
+app.use('/api',router)
 
 connectDB().then(()=>{
     console.log("Database connected!")
