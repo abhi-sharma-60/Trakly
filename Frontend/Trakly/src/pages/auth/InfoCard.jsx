@@ -1,5 +1,8 @@
 import React from 'react';
 
+// ✅ ENV VARIABLE (ADDED — nothing removed)
+const APP_NAME = import.meta.env.VITE_APP_NAME;
+
 // Reusable component for a single feature item
 const FeatureItem = ({ icon, title, description }) => (
   <div className="flex items-start space-x-4">
@@ -50,7 +53,7 @@ function InfoCard() {
 
       {/* Title Section */}
       <h2 className="text-3xl font-extrabold text-gray-900 mb-4">
-        Why Trakly?
+        Why {APP_NAME}?
       </h2>
 
       <p className="text-lg text-gray-600 mb-10">

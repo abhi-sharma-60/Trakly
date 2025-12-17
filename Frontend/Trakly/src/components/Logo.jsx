@@ -10,6 +10,10 @@ import logoImage from '/../Trakly/src/assets/logo.png';
  * @param {string} iconSizeClasses - Tailwind classes for the image size (default: w-6 h-6).
  * @param {string} textSize - Tailwind class for the text size (default: 'text-xl').
  */
+
+// ✅ ENV VARIABLE (ADDED — nothing removed)
+const APP_NAME = import.meta.env.VITE_APP_NAME;
+
 function Logo({ 
   className = '', 
   iconSizeClasses = 'w-15 h-15', // Default size for an emoji/small icon
@@ -26,7 +30,7 @@ function Logo({
       
       <img 
         src={logoImage} 
-        alt="AlgoQuest Logo"
+        alt={`${APP_NAME} Logo`}
         // Applying Tailwind classes for sizing (e.g., w-6 h-6 is 24px by 24px)
         className={`flex-shrink-0 object-contain ${iconSizeClasses}`} 
       />

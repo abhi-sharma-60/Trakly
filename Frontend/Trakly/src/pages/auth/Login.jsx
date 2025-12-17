@@ -7,6 +7,11 @@ import Logo from '../../components/Logo.jsx';
 // Assuming Tailwind CSS setup in your project (e.g., via PostCSS/Vite/Next.js)
 // We remove the import '../../index.css'; as styling is now inline via Tailwind classes.
 
+// ✅ ENV VARIABLES (ADDED — nothing removed)
+const APP_NAME = import.meta.env.VITE_APP_NAME;
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID;
+
 function Login() {
   // 1. STATE MANAGEMENT
   const navigate = useNavigate();
@@ -31,29 +36,47 @@ function Login() {
     return true;
   };
 
-  // 3. FORM SUBMISSION HANDLER (Same mock logic as before)
+  // 3. FORM SUBMISSION HANDLER (Dummy API logic added)
   const handleSubmit = async (e) => {
-  e.preventDefault();
+    e.preventDefault();
 
-  if (!validateForm()) return;
+    if (!validateForm()) return;
 
-  setIsLoading(true);
-  setError('');
+    setIsLoading(true);
+    setError('');
 
-  try {
-    await new Promise(resolve => setTimeout(resolve, 1500));
+    try {
+      // Dummy API call (mock backend)
+      // ❌ old: https://dummyjson.com/auth/login
+      // ✅ new: env-based API (future-ready)
+      const response = await fetch(`${API_BASE_URL}/auth/login`, {
 
-    if (email === 'test@user.com' && password === 'correctpassword') {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          username: 'abhi@abhi.com',
+          password: '123456',
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Invalid login credentials provided.');
+      }
+
+      // Successful dummy login
+      console.log('Dummy Token:', data.token);
       navigate('/dashboard');
-    } else {
-      throw new Error('Invalid login credentials provided.');
+
+    } catch (err) {
+      setError(err.message || 'Network error occurred. Try again.');
+    } finally {
+      setIsLoading(false);
     }
-  } catch (err) {
-    setError(err.message || 'Network error occurred. Try again.');
-  } finally {
-    setIsLoading(false);
-  }
-};
+  };
 
   // 4. JSX (UI Rendering with Tailwind CSS Classes)
   return (
@@ -70,13 +93,16 @@ function Login() {
             
             {/* Logo & Header */}
             <div className="flex items-center justify-center mb-6">
-              <span className="text-3xl w-20 mr-2 text-indigo-600" ><Logo iconSizeClasses="h-20 w-20"></Logo></span>
-              
+              <span className="text-3xl w-20 mr-2 text-indigo-600" >
+                <Logo iconSizeClasses="h-20 w-20"></Logo>
+              </span>
             </div>
             
             <h2 className="font-bold text-4xl text-gray-900 text-center mb-2">
-              Welcome to <span className='text-blue-500'>Trakly</span>
+              {/* ❌ hardcoded Trakly → ✅ env-based */}
+              Welcome to <span className='text-blue-500'>{APP_NAME}</span>
             </h2>
+
             <p className="text-sm text-gray-500 mb-8 text-center">
               Your ultimate competitive programming companion.
             </p>
@@ -169,7 +195,10 @@ function Login() {
                 className="w-full flex items-center justify-center py-3 border border-gray-300 rounded-lg 
                            text-gray-700 font-semibold bg-white hover:bg-gray-50 transition duration-150 shadow-sm"
                 disabled={isLoading}
-                onClick={() => alert('Initiating Google sign-in flow...')}
+                onClick={() => {
+                  console.log("Google Client ID:", GOOGLE_CLIENT_ID);
+                  alert('Initiating Google sign-in flow...');
+                }}
               >
                 <span className="text-lg mr-2 font-bold">
                   <FcGoogle />
