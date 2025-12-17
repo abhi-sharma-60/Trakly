@@ -2,6 +2,9 @@
 import React, { useState } from 'react';
 import Logo from './Logo';
 
+// ✅ ENV VARIABLE (ADDED — nothing removed)
+const APP_NAME = import.meta.env.VITE_APP_NAME;
+
 const navItems = [
   { name: 'Dashboard', icon: '🏠', type: 'link', active: true },
   { name: 'Profile & Sync', icon: '👤', type: 'link', active: false },
@@ -101,8 +104,7 @@ function Sidebar() {
       <div className="flex items-center space-x-2 py-4 mb-4">
         {/* Adjusted Logo rendering for Trakly */}
         <Logo /> 
-        <h1 className='text-3xl font-bold text-blue-500'>Trakly</h1>
-
+        <h1 className='text-3xl font-bold text-blue-500'>{APP_NAME}</h1>
       </div>
 
       {/* Main Navigation */}
