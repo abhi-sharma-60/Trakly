@@ -24,6 +24,7 @@ const userPlatformSchema = new mongoose.Schema(
       type: String
     },
 
+    problemCount: Number,
     rating: Number,        // CF rating, CC rating
     rank: Number,          // optional
 
@@ -37,6 +38,6 @@ const userPlatformSchema = new mongoose.Schema(
 /**
  * Prevent same user adding same platform twice
  */
-userPlatformSchema.index({ user: 1, platform: 1 }, { unique: true });
+userPlatformSchema.index({ user: 1, platform: 1, username: 1 }, { unique: true });
 
 export default mongoose.model("UserPlatform", userPlatformSchema);

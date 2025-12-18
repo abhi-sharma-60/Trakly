@@ -1,0 +1,21 @@
+import { Queue } from "bullmq";
+import redis from "../redis/redisClient.js";
+
+export const codeforcesQueue = new Queue("codeforces-sync", {
+  connection: redis,
+});
+
+export const addCodeforcesSyncJob = async (data) => {
+  await codeforcesQueue.add(
+    "cf-sync",
+    data,
+    {
+      attempts: 3,
+      backoff: {
+        type: "exponential",
+        delay: 5000,
+      },
+      removeOnComplete: true,
+    }
+  );
+};
