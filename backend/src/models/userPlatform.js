@@ -1,4 +1,3 @@
-// models/UserPlatform.js
 import mongoose from "mongoose";
 
 const userPlatformSchema = new mongoose.Schema(
@@ -24,7 +23,25 @@ const userPlatformSchema = new mongoose.Schema(
       type: String
     },
 
-    problemCount: Number,
+    totalSolved: {
+      type: Number,
+      default: 0
+    },
+
+    topicStats: {
+      Array: { type: Number, default: 0 },
+      DP: { type: Number, default: 0 },
+      Graph: { type: Number, default: 0 },
+      Tree: { type: Number, default: 0 },
+      Greedy: { type: Number, default: 0 },
+      String: { type: Number, default: 0 },
+      Math: { type: Number, default: 0 },
+      Other: { type: Number, default: 0 }
+    },
+    lastSubmissionIndex: {
+      type: Number,
+      default: 0
+    },
     rating: Number,        // CF rating, CC rating
     rank: Number,          // optional
 

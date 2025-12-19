@@ -1,5 +1,5 @@
 import User from "../../models/User.js";
-import CodeforcesProfile from "../../models/CodeforcesProfile.js";
+import UserPlatform from "../../models/userPlatform.js";
 import LeetCodeProfile from "../../models/LeetCodeProfile.js";
 
 import { addCodeforcesSyncJob } from "../../queues/codeforces.queue.js";
@@ -37,7 +37,7 @@ export const syncDashboard = async (req, res) => {
 
     // 4. Fetch latest known data from DB
     const [cfProfile, lcProfile] = await Promise.all([
-      CodeforcesProfile.findOne({ userId }).lean(),
+      UserPlatform.findOne({ userId }).lean(),
       LeetCodeProfile.findOne({ userId }).lean(),
     ]);
 

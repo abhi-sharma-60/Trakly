@@ -1,5 +1,5 @@
 import { fetchUserSubmissions } from "./cfApi.service.js";
-import CodeforcesProfile from "../../models/CodeforcesProfile.js";
+import UserPlatform from "../../models/userPlatform.js";
 
 export const initialSyncCodeforces = async ({ userId, handle }) => {
   let from = 1;
@@ -18,23 +18,65 @@ export const initialSyncCodeforces = async ({ userId, handle }) => {
     await new Promise((res) => setTimeout(res, 2000));
   }
 
+  const { totalSolved, topicStats } = countTopicWise(allSubmissions);
+
   // Process & store
-  await CodeforcesProfile.create({
-    userId,
-    handle,
-    submissionsCount: allSubmissions.length,
-    lastSyncedAt: new Date(),
-  });
+  await UserPlatform.findOneAndUpdate(
+    { user: userId, platform: "Codeforces" },
+    {
+      username: handle,
+      totalSolved,
+      topicStats,
+      lastSubmissionIndex,
+      lastSyncedAt: new Date(),
+    },
+    { upsert: true }
+  );
 };
 
 export const normalSyncCodeforces = async ({ userId, handle }) => {
-  const submissions = await fetchUserSubmissions(handle, 1, 50);
+  const cfStat = await UserPlatform.findOne({
+    user: userId,
+    platform: "Codeforces",
+  });
 
-  // Update stats only
-  await CodeforcesProfile.updateOne(
-    { userId },
+  // Safety check (first-time sync fallback)
+  if (!cfStat) return;
+
+  const from = cfStat.lastSubmissionIndex + 1;
+
+  // Fetch only NEW submissions
+  const submissions = await fetchUserSubmissions(handle, from, 50);
+
+  if (!submissions.length) return;
+  const newLastSubmissionIndex = cfStat.lastSubmissionIndex+submissions.length;
+
+  // Process ONLY new submissions
+  const {
+    newSolvedCount,
+    topicStats,
+  } = countTopicWise(submissions, cfStat.lastSubmissionIndex);
+
+  // Increment existing values
+  await UserPlatform.updateOne(
+    { user: userId, platform: "Codeforces" },
     {
-      $set: { lastSyncedAt: new Date() },
+      $inc: {
+        totalSolved: newSolvedCount,
+        "topicStats.Array": topicStats.Array,
+        "topicStats.DP": topicStats.DP,
+        "topicStats.Graph": topicStats.Graph,
+        "topicStats.Tree": topicStats.Tree,
+        "topicStats.Greedy": topicStats.Greedy,
+        "topicStats.String": topicStats.String,
+        "topicStats.Math": topicStats.Math,
+        "topicStats.Other": topicStats.Other,
+      },
+      $set: {
+        lastSubmissionIndex: newLastSubmissionIndex,
+        lastSyncedAt: new Date(),
+      },
     }
   );
 };
+
