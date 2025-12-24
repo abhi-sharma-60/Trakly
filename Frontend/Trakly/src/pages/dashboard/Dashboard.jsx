@@ -4,6 +4,7 @@ import Sidebar from '../../components/Sidebar';
 import Header from '../../components/Header';
 import AnalyticsDashboard from '../../components/AnalyticsDashboard';
 import ProfileSync from '../profilesync/ProfileSync';
+import CodeExecution from '../codeexecution/CodeExecution';
 
 // ENV VARIABLE
 const APP_NAME = import.meta.env.VITE_APP_NAME;
@@ -27,6 +28,8 @@ function Dashboard() {
             <Route path="/" element={<Navigate to="analytics" />} />
             <Route path="analytics" element={<AnalyticsDashboard />} />
             <Route path="profile-sync" element={<ProfileSync />} />
+            <Route path="code-execution" element={<CodeExecution />} />
+
           </Routes>
         </main>
         
