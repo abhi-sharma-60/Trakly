@@ -5,23 +5,35 @@ import {
   normalSyncCodeforces,
 } from "../services/codeforces/cfSync.service.js";
 
-const worker = new Worker(
+import { emitCfEvent } from "../sse/cfSseManager.js";
+
+new Worker(
   "codeforces-sync",
   async (job) => {
     const { type, userId, handle } = job.data;
 
-    if (type === "INITIAL_SYNC") {
-      await initialSyncCodeforces({ userId, handle });
-    }
+    try {
+      if (type === "INITIAL_SYNC") {
+        await initialSyncCodeforces({ userId, handle });
+      }
 
-    if (type === "NORMAL_SYNC") {
-      await normalSyncCodeforces({ userId, handle });
+      if (type === "NORMAL_SYNC") {
+        await normalSyncCodeforces({ userId, handle });
+      }
+
+      // 🔔 Notify frontend
+      emitCfEvent(userId, "CF_SYNC_COMPLETED", {
+        platform: "Codeforces",
+      });
+    } catch (err) {
+      emitCfEvent(userId, "CF_SYNC_FAILED", {
+        error: err.message,
+      });
+      throw err;
     }
   },
   {
     connection: redis,
-    concurrency: 1, // IMPORTANT: CF rate limit
+    concurrency: 1,
   }
 );
-
-export default worker;
