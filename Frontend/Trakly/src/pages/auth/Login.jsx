@@ -1,8 +1,8 @@
-import React, { useState } from 'react';
-import InfoCard from '../auth/InfoCard.jsx';
+import React, { useState } from "react";
+import InfoCard from "../auth/InfoCard.jsx";
 import { FcGoogle } from "react-icons/fc";
-import { useNavigate } from 'react-router-dom';
-import Logo from '../../components/Logo.jsx';
+import { Link, useNavigate } from "react-router-dom";
+import Logo from "../../components/Logo.jsx";
 
 // Assuming Tailwind CSS setup in your project (e.g., via PostCSS/Vite/Next.js)
 // We remove the import '../../index.css'; as styling is now inline via Tailwind classes.
@@ -15,64 +15,59 @@ const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID;
 function Login() {
   // 1. STATE MANAGEMENT
   const navigate = useNavigate();
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
   // 2. FORM VALIDATION (Frontend check)
   const validateForm = () => {
     if (!email.trim() || !password.trim()) {
-      setError('Email and Password are required.');
+      setError("Email and Password are required.");
       return false;
     }
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
-      setError('Please enter a valid email address.');
+      setError("Please enter a valid email address.");
       return false;
     }
-    setError('');
+    setError("");
     return true;
   };
 
-  // 3. FORM SUBMISSION HANDLER (Dummy API logic added)
+  // 3. FORM SUBMISSION HANDLER (REAL API)
   const handleSubmit = async (e) => {
     e.preventDefault();
 
     if (!validateForm()) return;
 
     setIsLoading(true);
-    setError('');
-
+    setError("");
+    
     try {
-      // Dummy API call (mock backend)
-      // ❌ old: https://dummyjson.com/auth/login
-      // ✅ new: env-based API (future-ready)
-      const response = await fetch(`${API_BASE_URL}/auth/login`, {
-
-        method: 'POST',
+      // ✅ REAL API CALL
+      const response = await fetch(`${API_BASE_URL}/login`, {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          username: 'abhi@abhi.com',
-          password: '123456',
+          email,
+          password,
         }),
       });
 
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error || 'Invalid login credentials provided.');
+        throw new Error(data.message || "Invalid login credentials provided.");
       }
-
-      // Successful dummy login
-      console.log('Dummy Token:', data.token);
-      navigate('/dashboard');
-
+      // Successful login
+      console.log("Auth Token:", data.token);
+      navigate("/dashboard");
     } catch (err) {
-      setError(err.message || 'Network error occurred. Try again.');
+      setError(err.message || "Network error occurred. Try again.");
     } finally {
       setIsLoading(false);
     }
@@ -83,24 +78,22 @@ function Login() {
     <>
       {/* Page wrapper: centers content both vertically & horizontally */}
       <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
-
         {/* Layout wrapper: stacks on mobile, side-by-side on large screens */}
         <div className="flex flex-col lg:flex-row gap-8 items-stretch">
-
           {/* LOGIN CARD */}
-          <div className="login-card p-10 bg-white rounded-xl ring shadow-2xl 
-                          w-[580px] font-sans flex flex-col">
-            
+          <div
+            className="login-card p-10 bg-white rounded-xl ring shadow-2xl 
+                          w-[580px] font-sans flex flex-col"
+          >
             {/* Logo & Header */}
             <div className="flex items-center justify-center mb-6">
-              <span className="text-3xl w-20 mr-2 text-indigo-600" >
+              <span className="text-3xl w-20 mr-2 text-indigo-600">
                 <Logo iconSizeClasses="h-20 w-20"></Logo>
               </span>
             </div>
-            
+
             <h2 className="font-bold text-4xl text-gray-900 text-center mb-2">
-              {/* ❌ hardcoded Trakly → ✅ env-based */}
-              Welcome to <span className='text-blue-500'>{APP_NAME}</span>
+              Welcome to <span className="text-blue-500">{APP_NAME}</span>
             </h2>
 
             <p className="text-sm text-gray-500 mb-8 text-center">
@@ -112,8 +105,10 @@ function Login() {
             </h3>
 
             {/* Login Form */}
-            <form className="login-form space-y-4 flex-grow" onSubmit={handleSubmit}>
-              
+            <form
+              className="login-form space-y-4 flex-grow"
+              onSubmit={handleSubmit}
+            >
               {/* Email Input Group */}
               <div className="flex items-center bg-gray-50 border border-gray-200 rounded-lg px-4 py-3">
                 <span className="text-gray-400 mr-3">✉️</span>
@@ -132,7 +127,7 @@ function Login() {
               <div className="flex items-center bg-gray-50 border border-gray-200 rounded-lg px-4 py-3 relative">
                 <span className="text-gray-400 mr-3">🔒</span>
                 <input
-                  type={showPassword ? 'text' : 'password'}
+                  type={showPassword ? "text" : "password"}
                   placeholder="Password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
@@ -148,7 +143,7 @@ function Login() {
                   onClick={() => setShowPassword(!showPassword)}
                   disabled={isLoading}
                 >
-                  {showPassword ? '👀' : '👁️'}
+                  {showPassword ? "👀" : "👁️"}
                 </button>
               </div>
 
@@ -173,31 +168,34 @@ function Login() {
               <button
                 type="submit"
                 className={`w-full py-3 rounded-lg font-bold transition duration-300 
-                  ${isLoading 
-                    ? 'bg-indigo-300 cursor-not-allowed' 
-                    : 'bg-indigo-600 text-white hover:bg-indigo-700 shadow-md'
+                  ${
+                    isLoading
+                      ? "bg-indigo-300 cursor-not-allowed"
+                      : "bg-indigo-600 text-white hover:bg-indigo-700 shadow-md"
                   }`}
                 disabled={isLoading}
               >
-                {isLoading ? 'Signing In...' : 'Sign In'}
+                {isLoading ? "Signing In..." : "Sign In"}
               </button>
 
               {/* OR Separator */}
               <div className="flex items-center my-6">
                 <div className="flex-grow border-t border-gray-300"></div>
-                <span className="flex-shrink mx-4 text-gray-400 text-sm">OR</span>
+                <span className="flex-shrink mx-4 text-gray-400 text-sm">
+                  OR
+                </span>
                 <div className="flex-grow border-t border-gray-300"></div>
               </div>
 
               {/* Sign In with Google Button */}
-              <button 
-                type="button" 
+              <button
+                type="button"
                 className="w-full flex items-center justify-center py-3 border border-gray-300 rounded-lg 
                            text-gray-700 font-semibold bg-white hover:bg-gray-50 transition duration-150 shadow-sm"
                 disabled={isLoading}
                 onClick={() => {
                   console.log("Google Client ID:", GOOGLE_CLIENT_ID);
-                  alert('Initiating Google sign-in flow...');
+                  alert("Initiating Google sign-in flow...");
                 }}
               >
                 <span className="text-lg mr-2 font-bold">
@@ -210,18 +208,17 @@ function Login() {
             {/* Sign Up Link */}
             <div className="text-center mt-4 text-sm">
               <span className="text-gray-600">Don't have an account? </span>
-              <a
-                href="/signup"
+              <Link
+                to="/signup"
                 className="text-indigo-600 hover:text-indigo-800 font-medium"
               >
                 Sign Up
-              </a>
+              </Link>
             </div>
           </div>
 
           {/* INFO CARD */}
           <InfoCard />
-
         </div>
       </div>
     </>
