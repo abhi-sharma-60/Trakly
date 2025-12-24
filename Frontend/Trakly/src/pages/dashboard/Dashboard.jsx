@@ -34,9 +34,30 @@ function Dashboard() {
         <footer className="flex justify-between items-center p-4 bg-white border-t border-gray-200 text-xs text-gray-500">
           <p>© 2025 {APP_NAME}. All rights reserved.</p>
           <div className="space-x-4">
-            <a href="https://github.com/abhi-sharma-60" className="hover:text-gray-700">GitHub</a>
-            <a href="https://www.instagram.com/_abhiisharmaa_/" className="hover:text-gray-700">Instagram</a>
-            <a href="https://www.linkedin.com/in/abhishek-sharma-mnnit27/" className="hover:text-gray-700">LinkedIn</a>
+            <a
+              href="https://github.com/abhi-sharma-60"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="hover:text-gray-700"
+            >
+              GitHub
+            </a>
+            <a
+              href="https://www.instagram.com/_abhiisharmaa_/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="hover:text-gray-700"
+            >
+              Instagram
+            </a>
+            <a
+              href="https://www.linkedin.com/in/abhishek-sharma-mnnit27/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="hover:text-gray-700"
+            >
+              LinkedIn
+            </a>
           </div>
         </footer>
       </div>
