@@ -12,7 +12,6 @@ const navItems = [
 ];
 
 const settingItems = [
-  { name: 'Settings', icon: '⚙️', type: 'toggle' }, // Changed type to 'toggle'
   { name: 'Log out', icon: '🚪', type: 'action' },
 ];
 
@@ -125,21 +124,6 @@ function Sidebar() {
             <li key={item.name}>
                 {renderNavItem(item)}
                 
-                {/* Nested Settings Dropdown Menu */}
-                {item.name === 'Settings' && isSettingsOpen && (
-                    <ul className="ml-4 mt-1 space-y-1 border-l border-gray-200 pl-4 py-1 bg-gray-50 rounded-r-lg">
-                        {settingFeatures.map((feature, index) => (
-                            <li key={index}>
-                                <button
-                                    onClick={() => handleFeatureClick(feature.action)}
-                                    className="w-full text-left text-xs text-gray-700 hover:text-indigo-600 hover:bg-white p-2 rounded-lg transition-colors"
-                                >
-                                    {feature.name}
-                                </button>
-                            </li>
-                        ))}
-                    </ul>
-                )}
             </li>
           ))}
         </ul>
