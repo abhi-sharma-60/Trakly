@@ -1,10 +1,11 @@
-// src/layouts/Dashboard.js
 import React from 'react';
+import { Routes, Route, Navigate } from 'react-router-dom';
 import Sidebar from '../../components/Sidebar';
 import Header from '../../components/Header';
 import AnalyticsDashboard from '../../components/AnalyticsDashboard';
+import ProfileSync from '../profilesync/ProfileSync';
 
-// ✅ ENV VARIABLE (ADDED — nothing removed)
+// ENV VARIABLE
 const APP_NAME = import.meta.env.VITE_APP_NAME;
 
 function Dashboard() {
@@ -17,15 +18,19 @@ function Dashboard() {
       {/* Main Content Area */}
       <div className="flex flex-col flex-1 overflow-hidden">
         
-        {/* Header (Top Bar) */}
+        {/* Header */}
         <Header />
         
-        {/* Scrollable Dashboard Content */}
+        {/* Routed Content */}
         <main className="flex-1 overflow-x-hidden overflow-y-auto">
-          <AnalyticsDashboard />
+          <Routes>
+            <Route path="/" element={<Navigate to="analytics" />} />
+            <Route path="analytics" element={<AnalyticsDashboard />} />
+            <Route path="profile-sync" element={<ProfileSync />} />
+          </Routes>
         </main>
         
-        {/* Footer (Mock, as seen in the screenshot) */}
+        {/* Footer */}
         <footer className="flex justify-between items-center p-4 bg-white border-t border-gray-200 text-xs text-gray-500">
           <p>© 2025 {APP_NAME}. All rights reserved.</p>
           <div className="space-x-4">
@@ -40,9 +45,3 @@ function Dashboard() {
 }
 
 export default Dashboard;
-
-// To run the application, ensure this component is rendered in your main App.js file:
-// // App.js
-// import Dashboard from './layouts/Dashboard';
-// const App = () => <Dashboard />;
-// export default App;

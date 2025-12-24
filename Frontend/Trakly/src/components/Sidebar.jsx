@@ -1,14 +1,15 @@
 // src/components/Sidebar.js
 import React, { useState } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import Logo from './Logo';
 
 // ✅ ENV VARIABLE (ADDED — nothing removed)
 const APP_NAME = import.meta.env.VITE_APP_NAME;
 
 const navItems = [
-  { name: 'Dashboard', icon: '🏠', type: 'link', active: true },
-  { name: 'Profile & Sync', icon: '👤', type: 'link', active: false },
-  { name: 'Code Execution', icon: '<>', type: 'link', active: false },
+  { name: 'Dashboard', icon: '🏠', type: 'link', route: '/dashboard/analytics' },
+  { name: 'Profile & Sync', icon: '👤', type: 'link', route: '/dashboard/profile-sync' },
+  { name: 'Code Execution', icon: '<>', type: 'link', route: '/dashboard/code-execution' },
 ];
 
 const settingItems = [
@@ -22,6 +23,8 @@ const settingFeatures = [
 ];
 
 function Sidebar() {
+  const navigate = useNavigate();
+  const location = useLocation();
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
   // LOGOUT HANDLER (Same as before)
@@ -47,18 +50,20 @@ function Sidebar() {
   const renderNavItem = (item) => {
     // If the item is a link (default navigation)
     if (item.type === 'link') {
+      const isActive = location.pathname === item.route;
+
       return (
-        <a
-          href={`#${item.name.toLowerCase().replace(/\s/g, '-')}`}
-          className={`flex items-center space-x-3 p-3 rounded-lg text-sm transition-colors ${
-            item.active
+        <button
+          onClick={() => navigate(item.route)}
+          className={`w-full text-left flex items-center space-x-3 p-3 rounded-lg text-sm transition-colors ${
+            isActive
               ? 'bg-indigo-50 text-indigo-700 font-semibold'
               : 'text-gray-600 hover:bg-gray-50'
           }`}
         >
           <span className="text-lg">{item.icon}</span>
           <span>{item.name}</span>
-        </a>
+        </button>
       );
     } 
     
@@ -123,7 +128,6 @@ function Sidebar() {
           {settingItems.map((item) => (
             <li key={item.name}>
                 {renderNavItem(item)}
-                
             </li>
           ))}
         </ul>
