@@ -1,7 +1,7 @@
 import React from 'react';
 // 1. IMPORT THE IMAGE: The exact path in your project must be used for the import.
 // Assuming your Logo component is in 'src/components/'
-import logoImage from '/../Trakly/src/assets/logo.png'; 
+import logoImage from '../../public/logo.png';
 
 /**
  * Reusable Logo Component for AlgoQuest
