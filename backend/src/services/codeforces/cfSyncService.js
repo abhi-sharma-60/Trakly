@@ -1,4 +1,4 @@
-import { fetchUserSubmissions } from "./cfApi.service.js";
+import { fetchUserSubmissions } from "./cfApiService.js";
 import UserPlatform from "../../models/userPlatform.js";
 
 export const initialSyncCodeforces = async ({ userId, handle }) => {

@@ -1,43 +1,34 @@
-import CodeforcesProfile from "../../models/CodeforcesProfile.js";
-import { addCodeforcesSyncJob } from "../../queues/codeforces.queue.js";
+import UserPlatform from "../../../models/userPlatform.js";
 
-export const getDetails = async (req, res) => {
+export const getCodeforcesDetails = async (req, res) => {
   try {
-    const { handle } = req.body;
-    const userId = req.user.id; // from auth middleware
+    const userId = req.user.id;
+    const { handle } = req.query; // optional
 
-    if (!handle) {
-      return res.status(400).json({ message: "Codeforces handle required" });
-    }
+    const cfData = await UserPlatform.findOne({
+      user: userId,
+      platform: "Codeforces",
+    }).lean();
 
-    // Check if user already has CF profile
-    const cfProfile = await CodeforcesProfile.findOne({ userId });
-
-    if (!cfProfile) {
-      // First time CF sync
-      await addCodeforcesSyncJob({
-        type: "INITIAL_SYNC",
-        userId,
-        handle,
-      });
-
-      return res.status(202).json({
-        message: "Initial Codeforces sync started",
+    if (!cfData) {
+      return res.status(404).json({
+        message: "Codeforces data not found",
       });
     }
 
-    // Existing CF user → normal sync
-    await addCodeforcesSyncJob({
-      type: "NORMAL_SYNC",
-      userId,
-      handle,
-    });
+    // Optional safety check
+    if (handle && cfData.username !== handle) {
+      return res.status(400).json({
+        message: "Handle mismatch",
+      });
+    }
 
-    return res.status(202).json({
-      message: "Codeforces sync started",
+    return res.json({
+      platform: "Codeforces",
+      data: cfData,
     });
   } catch (err) {
-    console.error("CF getDetails error:", err);
+    console.error("Get CF details error:", err);
     res.status(500).json({ message: "Internal server error" });
   }
 };

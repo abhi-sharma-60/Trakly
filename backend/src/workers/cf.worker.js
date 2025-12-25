@@ -1,9 +1,9 @@
 import { Worker } from "bullmq";
-import redis from "../redis/redisClient.js";
+import redis from "../redis/redis.client.js";
 import {
   initialSyncCodeforces,
   normalSyncCodeforces,
-} from "../services/codeforces/cfSync.service.js";
+} from "../services/codeforces/cfSyncService.js";
 
 import { emitCfEvent } from "../sse/cfSseManager.js";
 

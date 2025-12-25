@@ -1,4 +1,4 @@
-import { UserModel } from "../../models/userModel.js";
+import UserModel from "../../models/userModel.js";
 
 const login = async (req, res) => {
     try {
@@ -33,8 +33,15 @@ const login = async (req, res) => {
         }
 
         // 4. Generate tokens
-        const accessToken = user.generateAccessToken();
-        const refreshToken = user.generateRefreshToken();
+        const accessToken = await user.generateAccessToken();
+        const refreshToken = await user.generateRefreshToken();
+        const token = await user.generateAccessToken()
+
+        const cookieOptions = {
+            httpOnly : true,
+            secure : true,
+            sameSite: "None",
+        }
 
         // 5. Save refresh token in DB
         user.refreshToken = refreshToken;
@@ -44,13 +51,14 @@ const login = async (req, res) => {
         const loggedInUser = await UserModel.findById(user._id);
 
         // 7. Send response
-        return res.status(200).json({
+        return res.cookie('token',token,cookieOptions).status(200).json({
             success: true,
             message: "Login successful",
             data: {
                 user: loggedInUser,
                 accessToken,
-                refreshToken
+                refreshToken,
+                token
             }
         });
 

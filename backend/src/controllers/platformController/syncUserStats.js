@@ -1,16 +1,16 @@
-import User from "../../models/User.js";
+import UserModel from "../../models/userModel.js"
 import UserPlatform from "../../models/userPlatform.js";
-import LeetCodeProfile from "../../models/LeetCodeProfile.js";
+//import LeetCodeProfile from "../../models/LeetCodeProfile.js";
 
-import { addCodeforcesSyncJob } from "../../queues/codeforces.queue.js";
-import { syncLeetCode } from "../../services/leetcode/leetcodeSync.service.js";
+import { codeforcesQueue } from "../../queues/cf.queue.js";
+import { syncLeetCode } from "../../services/leetcode/leetcodeSync.js";
 
 export const syncDashboard = async (req, res) => {
   try {
     const userId = req.user.id;
 
     // 1. Fetch user & handles
-    const user = await User.findById(userId).lean();
+    const user = await UserModel.findById(userId).lean();
 
     if (!user) {
       return res.status(404).json({ message: "User not found" });
@@ -20,7 +20,7 @@ export const syncDashboard = async (req, res) => {
 
     // 2. Trigger Codeforces sync (ASYNC)
     if (codeforcesHandle) {
-      await addCodeforcesSyncJob({
+      await codeforcesQueue({
         type: "NORMAL_SYNC",
         userId,
         handle: codeforcesHandle,
@@ -37,8 +37,8 @@ export const syncDashboard = async (req, res) => {
 
     // 4. Fetch latest known data from DB
     const [cfProfile, lcProfile] = await Promise.all([
-      UserPlatform.findOne({ userId }).lean(),
-      LeetCodeProfile.findOne({ userId }).lean(),
+      UserPlatform.findOne({ userId,platform:"Codeforces" }).lean(),
+      UserPlatform.findOne({ userId,platform:"Leetcode" }).lean(),
     ]);
 
     // 5. Respond immediately

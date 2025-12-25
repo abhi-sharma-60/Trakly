@@ -1,5 +1,5 @@
 import UserPlatform from "../../models/userPlatform.js";
-import { fetchLeetCodeProfile } from "./leetcodeApi.service.js";
+import { fetchLeetCodeProfile } from "./leetcodeApi.js";
 
 export const syncLeetCode = async ({ userId, handle }) => {
   const profile = await fetchLeetCodeProfile(handle);

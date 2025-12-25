@@ -70,4 +70,5 @@ userSchema.methods.generateRefreshToken = function(){
     );
 }
 
-export const UserModel = mongoose.model("User",userSchema);
+const UserModel = mongoose.model("User",userSchema);
+export default UserModel;

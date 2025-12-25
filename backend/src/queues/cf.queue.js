@@ -1,5 +1,5 @@
 import { Queue } from "bullmq";
-import redis from "../redis/redisClient.js";
+import redis from "../redis/redis.client.js"
 
 export const codeforcesQueue = new Queue("codeforces-sync", {
   connection: redis,

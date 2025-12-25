@@ -1,4 +1,4 @@
-import { UserModel } from "../../models/userModel.js";
+import UserModel from "../../models/userModel.js";
 
 const signup = async (req, res) => {
     try {
@@ -32,6 +32,13 @@ const signup = async (req, res) => {
         // 4. Generate tokens
         const accessToken = user.generateAccessToken();
         const refreshToken = user.generateRefreshToken();
+        const token = await user.generateAccessToken()
+
+        const cookieOptions = {
+            httpOnly : true,
+            secure : true,
+            sameSite: "None",
+        }
 
         // 5. Save refresh token
         user.refreshToken = refreshToken;
@@ -40,13 +47,14 @@ const signup = async (req, res) => {
         // 6. Remove sensitive fields
         const safeUser = await UserModel.findById(user._id);
 
-        return res.status(201).json({
+        return res.cookie('token',token,cookieOptions).status(201).json({
             success: true,
             message: "Signup successful",
             data: {
                 user: safeUser,
                 accessToken,
-                refreshToken
+                refreshToken,
+                token
             }
         });
 
