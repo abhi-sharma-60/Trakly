@@ -57,4 +57,5 @@ const userPlatformSchema = new mongoose.Schema(
  */
 userPlatformSchema.index({ user: 1, platform: 1, username: 1 }, { unique: true });
 
-export default mongoose.model("UserPlatform", userPlatformSchema);
+const UserPlatform = mongoose.model("UserPlatform",userPlatformSchema);
+export default UserPlatform;

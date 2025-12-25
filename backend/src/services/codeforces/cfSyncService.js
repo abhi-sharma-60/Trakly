@@ -5,6 +5,7 @@ export const initialSyncCodeforces = async ({ userId, handle }) => {
   let from = 1;
   const count = 1000; // max allowed
   let allSubmissions = [];
+  console.log("working")
 
   while (true) {
     const submissions = await fetchUserSubmissions(handle, from, count);
@@ -39,6 +40,7 @@ export const normalSyncCodeforces = async ({ userId, handle }) => {
     user: userId,
     platform: "Codeforces",
   });
+  console.log("working")
 
   // Safety check (first-time sync fallback)
   if (!cfStat) return;

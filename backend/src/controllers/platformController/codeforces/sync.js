@@ -1,24 +1,25 @@
 import UserModel from "../../../models/userModel.js";
-import { codeforcesQueue } from "../../../queues/cf.queue.js";
+import UserPlatform from "../../../models/userPlatform.js";
+import { addCodeforcesSyncJob } from "../../../queues/cf.queue.js";
 
 export const syncCodeforces = async (req, res) => {
   try {
-    const userId = req.user.id;
+    const {userId} = req.body;
 
     // Fetch user to get CF handle
     const user = await UserModel.findById(userId).lean();
-
-    if (!user || !user.codeforcesHandle) {
+    const cfProfile = await UserPlatform.findOne({user:userId,platform:"Codeforces"});
+    if (!user || !cfProfile) {
       return res.status(400).json({
         message: "Codeforces handle not linked",
       });
     }
 
     // Enqueue CF sync job
-    await codeforcesQueue({
+    await addCodeforcesSyncJob({
       type: "NORMAL_SYNC",
       userId,
-      handle: user.codeforcesHandle,
+      handle: cfProfile.username,
     });
 
     return res.json({

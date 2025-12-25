@@ -1,14 +1,16 @@
 import UserModel from "../../../models/userModel.js"
+import UserPlatform from "../../../models/userPlatform.js";
 import { syncLeetCode } from "../../../services/leetcode/leetcodeSync.js";
 
 export const syncLeetCodeManual = async (req, res) => {
   try {
-    const userId = req.user.id;
+    const userId = req.userId;
 
     // Fetch user to get LC handle
     const user = await UserModel.findById(userId).lean();
+    const leetcodeProfile = await UserPlatform.findOne({user:userId,platform:"Leetcode"});
 
-    if (!user || !user.leetcodeHandle) {
+    if (!user || leetcodeProfile) {
       return res.status(400).json({
         message: "LeetCode handle not linked",
       });
@@ -17,7 +19,7 @@ export const syncLeetCodeManual = async (req, res) => {
     // Inline LeetCode sync
     await syncLeetCode({
       userId,
-      handle: user.leetcodeHandle,
+      handle: leetcodeProfile.username,
     });
 
     return res.json({

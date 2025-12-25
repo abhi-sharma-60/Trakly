@@ -6,7 +6,7 @@ export const codeforcesQueue = new Queue("codeforces-sync", {
 });
 
 export const addCodeforcesSyncJob = async (data) => {
-  await codeforcesQueue.add(
+  const job = await codeforcesQueue.add(
     "cf-sync",
     data,
     {
@@ -18,4 +18,6 @@ export const addCodeforcesSyncJob = async (data) => {
       removeOnComplete: true,
     }
   );
+  console.log("Job added with id:",job.id);
+
 };

@@ -7,7 +7,7 @@ import { syncLeetCode } from "../../services/leetcode/leetcodeSync.js";
 
 export const syncDashboard = async (req, res) => {
   try {
-    const userId = req.user.id;
+    const userId = req.userId;
 
     // 1. Fetch user & handles
     const user = await UserModel.findById(userId).lean();
@@ -37,15 +37,15 @@ export const syncDashboard = async (req, res) => {
 
     // 4. Fetch latest known data from DB
     const [cfProfile, lcProfile] = await Promise.all([
-      UserPlatform.findOne({ userId,platform:"Codeforces" }).lean(),
-      UserPlatform.findOne({ userId,platform:"Leetcode" }).lean(),
+      UserPlatform.findOne({ user:userId,platform:"Codeforces" }).lean(),
+      UserPlatform.findOne({ user:userId,platform:"Leetcode" }).lean(),
     ]);
 
     // 5. Respond immediately
     return res.json({
       codeforces: {
         data: cfProfile,
-        syncStatus: cfProfile?.syncStatus || "IDLE",
+        syncStatus: "IDLE",
       },
       leetcode: {
         data: lcProfile,
