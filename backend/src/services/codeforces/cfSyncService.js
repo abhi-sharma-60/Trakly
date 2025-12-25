@@ -1,5 +1,6 @@
 import { fetchUserSubmissions } from "./cfApiService.js";
 import UserPlatform from "../../models/userPlatform.js";
+import { countTopicWise } from "../../utils/countTopicWise.js";
 
 export const initialSyncCodeforces = async ({ userId, handle }) => {
   let from = 1;
@@ -9,7 +10,7 @@ export const initialSyncCodeforces = async ({ userId, handle }) => {
 
   while (true) {
     const submissions = await fetchUserSubmissions(handle, from, count);
-
+    //console.log(submissions.length)
     if (!submissions.length) break;
 
     allSubmissions.push(...submissions);
@@ -36,6 +37,7 @@ export const initialSyncCodeforces = async ({ userId, handle }) => {
 };
 
 export const normalSyncCodeforces = async ({ userId, handle }) => {
+  console.log("working")
   const cfStat = await UserPlatform.findOne({
     user: userId,
     platform: "Codeforces",
@@ -43,28 +45,35 @@ export const normalSyncCodeforces = async ({ userId, handle }) => {
   console.log("working")
 
   // Safety check (first-time sync fallback)
-  if (!cfStat) return;
+  if (!cfStat){
+    console.log("not found");
+    return;
+  }
 
   const from = cfStat.lastSubmissionIndex + 1;
 
   // Fetch only NEW submissions
   const submissions = await fetchUserSubmissions(handle, from, 50);
-
-  if (!submissions.length) return;
+  console.log(submissions.length)
+  if (!submissions.length){
+    console.log("return");
+    return;
+  }
+  //console.log(submissions)
   const newLastSubmissionIndex = cfStat.lastSubmissionIndex+submissions.length;
 
   // Process ONLY new submissions
   const {
-    newSolvedCount,
+    totalSolvedount,
     topicStats,
-  } = countTopicWise(submissions, cfStat.lastSubmissionIndex);
-
+  } = countTopicWise(submissions);
+  console.log(totalSolvedCount)
   // Increment existing values
   await UserPlatform.updateOne(
     { user: userId, platform: "Codeforces" },
     {
       $inc: {
-        totalSolved: newSolvedCount,
+        totalSolved: totalSolvedCount,
         "topicStats.Array": topicStats.Array,
         "topicStats.DP": topicStats.DP,
         "topicStats.Graph": topicStats.Graph,
@@ -80,5 +89,6 @@ export const normalSyncCodeforces = async ({ userId, handle }) => {
       },
     }
   );
+  console.log("done")
 };
 

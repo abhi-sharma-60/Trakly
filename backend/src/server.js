@@ -28,4 +28,3 @@ connectDB().then(()=>{
     console.log("Database connected!")
     app.listen(PORT,()=>{console.log(`server running at ${PORT}...`)})
 })
-

@@ -2,6 +2,7 @@ import { CF_TOPIC_MAP } from "./cfTopicMap.js";
 
 export const countTopicWise = (submissions) => {
   const solvedProblems = new Set();
+  console.log("entered")
 
   const topicStats = {
     Array: 0,
@@ -49,7 +50,8 @@ export const countTopicWise = (submissions) => {
       topicStats.Other++;
     }
   }
-
+  console.log("entered2")
+  console.log(solvedProblems.size)
   return {
     totalSolved: solvedProblems.size,
     topicStats,
