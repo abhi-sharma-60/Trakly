@@ -4,13 +4,13 @@ import { syncLeetCode } from "../../../services/leetcode/leetcodeSync.js";
 
 export const syncLeetCodeManual = async (req, res) => {
   try {
-    const userId = req.userId;
+    const {userId} = req.body;
 
     // Fetch user to get LC handle
     const user = await UserModel.findById(userId).lean();
-    const leetcodeProfile = await UserPlatform.findOne({user:userId,platform:"Leetcode"});
+    const leetcodeProfile = await UserPlatform.findOne({user:userId,platform:"LeetCode"});
 
-    if (!user || leetcodeProfile) {
+    if (!user || !leetcodeProfile) {
       return res.status(400).json({
         message: "LeetCode handle not linked",
       });

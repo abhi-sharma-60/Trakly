@@ -53,7 +53,7 @@ export const countTopicWise = (submissions) => {
   console.log("entered2")
   console.log(solvedProblems.size)
   return {
-    totalSolved: solvedProblems.size,
+    totalSolvedCount: solvedProblems.size,
     topicStats,
   };
 };

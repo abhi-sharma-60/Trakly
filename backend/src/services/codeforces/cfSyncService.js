@@ -37,7 +37,8 @@ export const initialSyncCodeforces = async ({ userId, handle }) => {
 };
 
 export const normalSyncCodeforces = async ({ userId, handle }) => {
-  console.log("working")
+  try {
+    console.log("working")
   const cfStat = await UserPlatform.findOne({
     user: userId,
     platform: "Codeforces",
@@ -64,10 +65,10 @@ export const normalSyncCodeforces = async ({ userId, handle }) => {
 
   // Process ONLY new submissions
   const {
-    totalSolvedount,
+    totalSolvedCount,
     topicStats,
   } = countTopicWise(submissions);
-  console.log(totalSolvedCount)
+  console.log("total",totalSolvedCount)
   // Increment existing values
   await UserPlatform.updateOne(
     { user: userId, platform: "Codeforces" },
@@ -90,5 +91,8 @@ export const normalSyncCodeforces = async ({ userId, handle }) => {
     }
   );
   console.log("done")
+  } catch (error) {
+    console.log("sync",error);
+  }
 };
 
