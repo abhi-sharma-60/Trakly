@@ -8,6 +8,7 @@ import { syncCodeforces } from "../controllers/platformController/codeforces/syn
 import { getCodeforcesDetails } from "../controllers/platformController/codeforces/getDetails.js"
 import { linkCodeforces } from "../controllers/platformController/codeforces/link.js"
 import { linkLeetcode } from "../controllers/platformController/leetcode/link.js"
+import { generateUserAnalysis } from "../controllers/UserController/analysis.js"
 
 const router = express.Router()
 
@@ -20,5 +21,6 @@ router.get("/sync-codeforces",syncCodeforces);
 router.get("/get-codeforces",getCodeforcesDetails);
 router.post("/link-codeforces",linkCodeforces);
 router.post("/link-leetcode",linkLeetcode);
+router.get("/get-analysis",generateUserAnalysis);
 
 export default router
