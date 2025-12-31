@@ -6,7 +6,8 @@
   "type": "module",
   "scripts": {
     "start": "nodemon src/server.js",
-    "worker:cf": "node src/workers/cf.worker.js"
+    "worker:cf": "node src/workers/cf.worker.js",
+    "db":"node src/services/codeforces/buildCfProblemDB.js"
   },
   "author": "",
   "license": "ISC",
