@@ -1,5 +1,6 @@
 import UserPlatform from "../../models/userPlatform.js";
 import UserAnalysisModel from "../../models/userAnalysisModel.js";
+import { getRecommendedProblems } from "../../services/ai/getRecommendedProblem.js";
 
 // ⚠️ DO NOT implement this file now (as you requested)
 import { generateAnalysis } from "../../services/ai/generateAnalysis.js";
@@ -45,6 +46,7 @@ export const generateUserAnalysis = async (req, res) => {
 
     // 3. Call AI service (implementation later)
     const analysisResult = await generateAnalysis(analysisInput);
+    const recommendations = await getRecommendedProblems(analysisResult);
 
     // 4. Store / overwrite analysis
     const savedAnalysis = await UserAnalysisModel.findOneAndUpdate(
@@ -57,6 +59,7 @@ export const generateUserAnalysis = async (req, res) => {
     return res.json({
       message: "Analysis generated successfully",
       analysis: savedAnalysis.analysis,
+      recommendations: recommendations
     });
 
   } catch (err) {
