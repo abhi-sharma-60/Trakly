@@ -6,7 +6,7 @@ import { generateAnalysis } from "../../services/ai/generateAnalysis.js";
 
 export const generateUserAnalysis = async (req, res) => {
   try {
-    const {userId} = req.body; // from auth middleware
+    const userId = req.userId; // from auth middleware
 
     // 1. Fetch platform stats
     const platforms = await UserPlatform.find({

@@ -7,7 +7,7 @@ import { syncLeetCode } from "../../services/leetcode/leetcodeSync.js";
 
 export const syncDashboard = async (req, res) => {
   try {
-    const {userId} = req.body;
+    const userId = req.userId;
 
     // 1. Fetch user & handles
     const user = await UserModel.findById(userId).lean();

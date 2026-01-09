@@ -2,8 +2,8 @@ import UserPlatform from "../../../models/userPlatform.js";
 
 export const getCodeforcesDetails = async (req, res) => {
   try {
-    
-    const { userId,handle } = req.body; // optional
+    const userId = req.userId;
+    const { handle } = req.body; // optional
 
     const cfData = await UserPlatform.findOne({
       user: userId,

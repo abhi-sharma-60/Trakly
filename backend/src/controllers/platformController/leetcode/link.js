@@ -3,7 +3,8 @@ import UserPlatform from "../../../models/userPlatform.js";
 
 export const linkLeetcode = async (req, res) => {
   try {
-    const { userId,handle } = req.body;
+    const userId = req.userId;
+    const { handle } = req.body;
 
     if (!handle) {
       return res.status(400).json({

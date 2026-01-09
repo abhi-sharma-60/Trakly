@@ -4,7 +4,7 @@ import { addCodeforcesSyncJob } from "../../../queues/cf.queue.js";
 
 export const syncCodeforces = async (req, res) => {
   try {
-    const {userId} = req.body;
+    const userId = req.userId;
 
     // Fetch user to get CF handle
     const user = await UserModel.findById(userId).lean();

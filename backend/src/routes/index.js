@@ -9,18 +9,21 @@ import { getCodeforcesDetails } from "../controllers/platformController/codeforc
 import { linkCodeforces } from "../controllers/platformController/codeforces/link.js"
 import { linkLeetcode } from "../controllers/platformController/leetcode/link.js"
 import { generateUserAnalysis } from "../controllers/UserController/analysis.js"
+import auth from "../middleware/auth.js"
 
 const router = express.Router()
 
 router.get("/login",login);
 router.post("/signup",signup);
 router.get("/google-login",googleLogin);
-router.get("/sync",syncDashboard);
-router.get("/sync-leetcode",syncLeetCodeManual);
-router.get("/sync-codeforces",syncCodeforces);
-router.get("/get-codeforces",getCodeforcesDetails);
-router.post("/link-codeforces",linkCodeforces);
-router.post("/link-leetcode",linkLeetcode);
-router.get("/get-analysis",generateUserAnalysis);
+
+//protected routes
+router.get("/sync",auth,syncDashboard);
+router.get("/sync-leetcode",auth,syncLeetCodeManual);
+router.get("/sync-codeforces",auth,syncCodeforces);
+router.get("/get-codeforces",auth,getCodeforcesDetails);
+router.post("/link-codeforces",auth,linkCodeforces);
+router.post("/link-leetcode",auth,linkLeetcode);
+router.get("/get-analysis",auth,generateUserAnalysis);
 
 export default router
