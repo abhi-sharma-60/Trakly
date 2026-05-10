@@ -3,7 +3,7 @@ import UserModel from "../../models/userModel.js";
 const signup = async (req, res) => {
     try {
         const { name, email, password } = req.body;
-
+        console.log("hit")
         // 1. Validate input
         if (!name || !email || !password) {
             return res.status(400).json({
@@ -46,7 +46,7 @@ const signup = async (req, res) => {
 
         // 6. Remove sensitive fields
         const safeUser = await UserModel.findById(user._id);
-
+        console.log("generated")
         return res.cookie('token',token,cookieOptions).status(201).json({
             success: true,
             message: "Signup successful",

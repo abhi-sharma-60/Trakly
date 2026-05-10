@@ -13,8 +13,8 @@ import auth from "../middleware/auth.js"
 
 const router = express.Router()
 
-router.get("/login",login);
-router.post("/signup",signup);
+router.post("/login",login);
+router.post("/auth/signup",signup);
 router.get("/google-login",googleLogin);
 
 //protected routes

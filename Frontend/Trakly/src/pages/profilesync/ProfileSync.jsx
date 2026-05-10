@@ -1,6 +1,9 @@
 import React, { useState } from 'react';
 import PlatformCard from '../../components/Platform';
 
+// Make sure to define your backend URL
+const BACKEND_URL = import.meta.env.VITE_API_BASE_URL
+
 function ProfileSync() {
   // Mock State for Platforms
   const [platforms, setPlatforms] = useState([
@@ -23,26 +26,60 @@ function ProfileSync() {
     ));
   };
 
-  const handleAdd = async (id) => {
-    // In real app, you'd validate the URL here
+  const handleAdd = async (id, providedHandle) => {
+    const platformToLink = platforms.find(p => p.id === id);
 
-    // Dummy API call for backend reference
-    try {
-      await fetch('https://dummyjson.com/posts/add', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          platformId: id,
-          action: 'LINK_PROFILE',
-        }),
-      });
-    } catch (err) {
-      console.log('Dummy add API failed');
+    // --- LEETCODE LINKING LOGIC ---
+    if (platformToLink.name === 'LeetCode') {
+      // If PlatformCard doesn't pass the handle, prompt the user for it
+      const handle = providedHandle || window.prompt("Please enter your LeetCode handle:");
+      
+      if (!handle) return; // Exit if the user cancels the prompt
+
+      try {
+        const response = await fetch(`${BACKEND_URL}/link-leetcode`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include', // CRITICAL: Sends the HTTP-only token cookie to the auth middleware
+          body: JSON.stringify({ handle }),
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+          // Success: Update UI
+          setPlatforms(platforms.map(p => 
+            p.id === id ? { ...p, status: 'Linked', lastSynced: 'Just now' } : p
+          ));
+          alert("LeetCode account linked successfully!");
+        } else {
+          // Backend rejected it (e.g., already linked, user not found)
+          alert(data.message || "Failed to link LeetCode account.");
+        }
+      } catch (err) {
+        console.error('LeetCode link API failed:', err);
+        alert("An error occurred while linking LeetCode.");
+      }
+    } 
+    // --- DUMMY LOGIC FOR OTHER PLATFORMS (Codeforces) ---
+    else {
+      try {
+        await fetch('https://dummyjson.com/posts/add', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            platformId: id,
+            action: 'LINK_PROFILE',
+          }),
+        });
+      } catch (err) {
+        console.log('Dummy add API failed');
+      }
+
+      setPlatforms(platforms.map(p => 
+        p.id === id ? { ...p, status: 'Linked', lastSynced: 'Just now' } : p
+      ));
     }
-
-    setPlatforms(platforms.map(p => 
-      p.id === id ? { ...p, status: 'Linked', lastSynced: 'Just now' } : p
-    ));
   };
 
   const handleUnlinkAll = async () => {

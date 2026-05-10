@@ -22,7 +22,7 @@ app.use(cors({
 app.use(cookieParser());
 
 //api
-app.use('/api',router)
+app.use('',router)
 
 connectDB().then(()=>{
     console.log("Database connected!")

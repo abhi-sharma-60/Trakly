@@ -3,7 +3,7 @@ import UserModel from "../../models/userModel.js";
 const login = async (req, res) => {
     try {
         const { email, password } = req.body;
-
+        console.log("login hit")
         // 1. Validate input
         if (!email || !password) {
             return res.status(400).json({
@@ -39,8 +39,8 @@ const login = async (req, res) => {
 
         const cookieOptions = {
             httpOnly : true,
-            secure : true,
-            sameSite: "None",
+            secure : false,
+            sameSite: "Lax",
         }
 
         // 5. Save refresh token in DB
