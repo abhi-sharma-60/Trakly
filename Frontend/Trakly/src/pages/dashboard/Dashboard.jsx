@@ -1,19 +1,23 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
+import { useDispatch } from 'react-redux';
 import Sidebar from '../../components/Sidebar';
 import Header from '../../components/Header';
 import AnalyticsDashboard from '../../components/AnalyticsDashboard';
 import ProfileSync from '../profilesync/ProfileSync';
 import CodeExecution from '../codeexecution/CodeExecution';
 
+// Import your actions
+import { setInitialSyncData, updateCodeforcesData } from '../../redux/profileSlice'; 
+
 // ENV VARIABLES
 const APP_NAME = import.meta.env.VITE_APP_NAME;
-// Make sure you have your backend URL in your .env file
 const BACKEND_URL = import.meta.env.VITE_API_BASE_URL;
 
 function Dashboard() {
   const [notification, setNotification] = useState("");
   const hasInitialized = useRef(false);
+  const dispatch = useDispatch();
 
   // Helper function to show notifications temporarily
   const showNotification = (message) => {
@@ -21,13 +25,12 @@ function Dashboard() {
     setTimeout(() => setNotification(""), 5000);
   };
 
-  // --- NEW: Manual Sync Handlers ---
+  // --- Manual Sync Handlers ---
   const handleSyncLeetCode = async () => {
     showNotification("Starting LeetCode sync...");
     try {
-      // Adjust this endpoint to match your specific LeetCode sync route
       const response = await fetch(`${BACKEND_URL}/sync/leetcode`, {
-        method: 'POST', // or GET depending on your backend setup
+        method: 'POST', 
         credentials: 'include',
       });
       
@@ -45,9 +48,8 @@ function Dashboard() {
   const handleSyncCodeforces = async () => {
     showNotification("Queuing Codeforces sync...");
     try {
-      // Adjust this endpoint to match your specific Codeforces queue route
       const response = await fetch(`${BACKEND_URL}/sync/codeforces`, {
-        method: 'POST', // or GET depending on your backend setup
+        method: 'POST', 
         credentials: 'include',
       });
       
@@ -64,21 +66,38 @@ function Dashboard() {
   // ---------------------------------
 
   useEffect(() => {
-    // Prevent double-execution in React 18 Strict Mode
+    // Prevent double-execution in React 18 Strict Mode during a single mount
     if (hasInitialized.current) return;
     hasInitialized.current = true;
 
     // 1. Initial Sync Call
     const initiateSync = async () => {
+      // CHECK SESSION STORAGE: Ensure this only runs once per login session
+      const hasSynced = sessionStorage.getItem('hasSyncedInitial');
+      if (hasSynced === 'true') {
+        console.log("Initial sync already ran this session. Skipping.");
+        return;
+      }
+
       try {
         const response = await fetch(`${BACKEND_URL}/sync`, {
           method: 'GET',
-          credentials: 'include', // Important: Sends cookies to backend
+          credentials: 'include', 
         });
         
         if (response.ok) {
           const data = await response.json();
           console.log("Initial sync data:", data);
+          
+          // Dispatch data mapping to the new backend response structure
+          dispatch(setInitialSyncData({ 
+            leetcode: data.leetcode?.data, 
+            codeforces: null
+          }));
+          
+          // MARK AS SYNCED so it doesn't run again if the component remounts
+          sessionStorage.setItem('hasSyncedInitial', 'true');
+
           showNotification("LeetCode synced successfully! Codeforces sync in progress...");
         } else {
           console.error("Failed to sync dashboard");
@@ -92,46 +111,50 @@ function Dashboard() {
 
     // 2. Setup Server-Sent Events (SSE) for Codeforces
     const setupSSE = () => {
-      // withCredentials ensures cookies are sent along with the SSE request
       const sse = new EventSource(`${BACKEND_URL}/codeforcesSse`, {
         withCredentials: true,
       });
 
-      // Listen for the initial connection handshake from your backend
       sse.addEventListener("connected", (event) => {
         console.log("SSE Connected:", event.data);
       });
 
-      // Listen for standard messages (You need to trigger this from backend when CF is done)
-      sse.onmessage = async (event) => {
-        console.log("SSE Message received:", event.data);
+      // --- NEW: Listen for specific success event ---
+      sse.addEventListener("CF_SYNC_COMPLETED", async (event) => {
+        const data = JSON.parse(event.data);
+        console.log("SSE Sync Completed:", data);
+        showNotification("Codeforces sync completed! Fetching latest data...");
         
-        // Assuming your backend sends a specific string or JSON when CF sync completes.
-        // Adjust this condition based on exactly what your backend sends!
-        if (event.data.includes("COMPLETED") || event.data.includes("cf_done")) {
-          showNotification("Codeforces sync completed!");
+        try {
+          // Fetch the freshly synced Codeforces data using your specific route
+          const cfResponse = await fetch(`${BACKEND_URL}/get-codeforces`, {
+            method: 'GET',
+            credentials: 'include',
+          });
           
-          // 3. Fetch the freshly synced Codeforces data
-          try {
-            // Note: Replace this URL with your actual endpoint to fetch JUST Codeforces data
-            const cfResponse = await fetch(`${BACKEND_URL}/platforms/codeforces`, {
-              method: 'GET',
-              credentials: 'include',
-            });
+          if (cfResponse.ok) {
             const cfData = await cfResponse.json();
-            console.log("Updated Codeforces Data:", cfData);
+            console.log("Updated Codeforces Data fetched:", cfData);
             
-            // Do something with the cfData here (e.g., store in Redux/Context)
-
-          } catch (fetchErr) {
-            console.error("Failed to fetch updated Codeforces data", fetchErr);
+            // Dispatch the newly fetched data directly to Redux
+            dispatch(updateCodeforcesData(cfData));
           }
+        } catch (fetchErr) {
+          console.error("Failed to fetch updated Codeforces data", fetchErr);
         }
-      };
+      });
+
+      // --- NEW: Listen for specific failure event ---
+      sse.addEventListener("CF_SYNC_FAILED", (event) => {
+        const data = JSON.parse(event.data);
+        console.error("SSE Sync Failed:", data.error);
+        showNotification(`Codeforces sync failed: ${data.error}`);
+        sse.close(); 
+      });
 
       sse.onerror = (err) => {
         console.error("SSE Error:", err);
-        sse.close(); // Close on error to prevent infinite reconnection loops if unauthorized
+        sse.close(); 
       };
 
       return sse;
@@ -145,12 +168,12 @@ function Dashboard() {
         sseConnection.close();
       }
     };
-  }, []);
+  }, [dispatch]); 
 
   return (
     <div className="flex h-screen bg-gray-100 relative">
       
-      {/* Toast Notification (Doesn't affect existing layout) */}
+      {/* Toast Notification */}
       {notification && (
         <div className="absolute top-4 right-4 z-50 bg-green-600 text-white px-6 py-3 rounded-md shadow-lg transition-all duration-300">
           {notification}
@@ -166,7 +189,7 @@ function Dashboard() {
         {/* Header */}
         <Header />
 
-        {/* NEW: Action Bar for Manual Syncs */}
+        {/* Action Bar for Manual Syncs */}
         <div className="bg-white border-b border-gray-200 px-6 py-3 flex space-x-4 items-center shadow-sm z-10">
           <button 
             onClick={handleSyncLeetCode}
