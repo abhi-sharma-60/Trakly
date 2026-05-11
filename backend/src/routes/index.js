@@ -9,7 +9,7 @@ import { getCodeforcesDetails } from "../controllers/platformController/codeforc
 import { linkCodeforces } from "../controllers/platformController/codeforces/link.js"
 import { linkLeetcode } from "../controllers/platformController/leetcode/link.js"
 import { generateUserAnalysis } from "../controllers/UserController/analysis.js"
-import {cfSseController} from "../controllers/platformController/codeforces/cfSseController.js"
+import {codeforcesSse} from "../controllers/platformController/codeforces/cfSseController.js"
 import auth from "../middleware/auth.js"
 
 const router = express.Router()
@@ -28,6 +28,6 @@ router.post("/link-leetcode",auth,linkLeetcode);
 router.get("/get-analysis",auth,generateUserAnalysis);
 
 // SSE route for Codeforces sync status
-router.get("/codeforcesSse", auth, cfSseController);
+router.get("/codeforcesSse", auth, codeforcesSse);
 
 export default router

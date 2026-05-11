@@ -4,10 +4,8 @@ import PlatformCard from '../../components/Platform';
 
 // Import your Redux actions
 import { 
-  setLeetcodeHandle, 
-  setCodeforcesHandle, 
   setInitialSyncData 
-} from '../../redux/profileSlice';
+} from '../../store/profileSlice.js';
 
 // Make sure to define your backend URL
 const BACKEND_URL = import.meta.env.VITE_API_BASE_URL;

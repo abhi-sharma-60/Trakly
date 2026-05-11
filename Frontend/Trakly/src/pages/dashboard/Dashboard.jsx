@@ -8,7 +8,7 @@ import ProfileSync from '../profilesync/ProfileSync';
 import CodeExecution from '../codeexecution/CodeExecution';
 
 // Import your actions
-import { setInitialSyncData, updateCodeforcesData } from '../../redux/profileSlice'; 
+import { setInitialSyncData, updateCodeforcesData } from '../../store/profileSlice.js'; 
 
 // ENV VARIABLES
 const APP_NAME = import.meta.env.VITE_APP_NAME;

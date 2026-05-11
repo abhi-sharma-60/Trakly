@@ -1,7 +1,7 @@
 import {
     addCfClient,
     removeCfClient,
-  } from "../../sse/cfSseManager.js";
+  } from "../../../sse/cfSseManager.js";
   
   export const codeforcesSse = (req, res) => {
     const userId = req.userId;
