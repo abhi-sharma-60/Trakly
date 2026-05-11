@@ -1,6 +1,8 @@
 import { createSlice } from '@reduxjs/toolkit';
 
 const initialState = {
+  leetcodeHandle: null,
+  codeforcesHandle: null,
   leetcodeData: null,
   codeforcesData: null,
   isSyncing: false,
@@ -27,8 +29,22 @@ const profileSlice = createSlice({
     setSyncingStatus: (state, action) => {
       state.isSyncing = action.payload;
     },
+    // --- NEW REDUCERS ---
+    setLeetcodeHandle: (state, action) => {
+      state.leetcodeHandle = action.payload;
+    },
+    setCodeforcesHandle: (state, action) => {
+      state.codeforcesHandle = action.payload;
+    }
   },
 });
 
-export const { setInitialSyncData, updateCodeforcesData, setSyncingStatus } = profileSlice.actions;
+export const { 
+  setInitialSyncData, 
+  updateCodeforcesData, 
+  setSyncingStatus,
+  setLeetcodeHandle,
+  setCodeforcesHandle 
+} = profileSlice.actions;
+
 export default profileSlice.reducer;

@@ -7,8 +7,12 @@ import AnalyticsDashboard from '../../components/AnalyticsDashboard';
 import ProfileSync from '../profilesync/ProfileSync';
 import CodeExecution from '../codeexecution/CodeExecution';
 
-// Import your actions
-import { setInitialSyncData, updateCodeforcesData } from '../../store/profileSlice.js'; 
+// Import your actions (ADDED setLeetcodeHandle here)
+import { 
+  setInitialSyncData, 
+  updateCodeforcesData, 
+  setLeetcodeHandle 
+} from '../../store/profileSlice.js'; 
 
 // ENV VARIABLES
 const APP_NAME = import.meta.env.VITE_APP_NAME;
@@ -94,6 +98,13 @@ function Dashboard() {
             leetcode: data.leetcode?.data, 
             codeforces: null
           }));
+
+          // --- NEW: Extract and set the LeetCode handle in Redux ---
+          // It checks for either .username or .handle based on how you saved it in DB
+          const extractedLcHandle = data.leetcode?.data?.username || data.leetcode?.data?.handle;
+          if (extractedLcHandle) {
+            dispatch(setLeetcodeHandle(extractedLcHandle));
+          }
           
           // MARK AS SYNCED so it doesn't run again if the component remounts
           sessionStorage.setItem('hasSyncedInitial', 'true');
@@ -119,7 +130,7 @@ function Dashboard() {
         console.log("SSE Connected:", event.data);
       });
 
-      // --- NEW: Listen for specific success event ---
+      // --- Listen for specific success event ---
       sse.addEventListener("CF_SYNC_COMPLETED", async (event) => {
         const data = JSON.parse(event.data);
         console.log("SSE Sync Completed:", data);
@@ -144,7 +155,7 @@ function Dashboard() {
         }
       });
 
-      // --- NEW: Listen for specific failure event ---
+      // --- Listen for specific failure event ---
       sse.addEventListener("CF_SYNC_FAILED", (event) => {
         const data = JSON.parse(event.data);
         console.error("SSE Sync Failed:", data.error);

@@ -5,6 +5,7 @@ import Logo from './Logo';
 
 // ✅ ENV VARIABLE (ADDED — nothing removed)
 const APP_NAME = import.meta.env.VITE_APP_NAME;
+const BACKEND_URL = import.meta.env.VITE_API_BASE_URL;
 
 const navItems = [
   { name: 'Dashboard', icon: '🏠', type: 'link', route: '/dashboard/analytics' },
@@ -28,11 +29,23 @@ function Sidebar() {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
   // LOGOUT HANDLER (Same as before)
-  const handleLogout = (e) => {
+  const handleLogout = async (e) => {
     e.preventDefault(); 
-    localStorage.removeItem('authToken');
-    sessionStorage.clear();
-    window.location.href = '/'; 
+    
+    try {
+      // 1. Notify the backend to clear the auth cookie/session
+      await fetch(`${BACKEND_URL}/logout`, {
+        method: 'POST',
+        credentials: 'include', // Ensure cookies are sent with the request
+      });
+    } catch (error) {
+      console.error("Backend logout failed:", error);
+    } finally {
+      // 2. Clear frontend state and redirect, regardless of backend success
+      localStorage.removeItem('authToken');
+      sessionStorage.clear();
+      window.location.href = '/'; 
+    }
   };
   
   // Settings Handler

@@ -1,7 +1,10 @@
-import React from 'react';
+import React, { useState } from 'react';
 
 function PlatformCard({ platform, onAdd, onRemove }) {
   const isLinked = platform.status === 'Linked';
+  
+  // NEW: State to track what the user types in the input box
+  const [inputValue, setInputValue] = useState('');
 
   return (
     <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex flex-col h-full">
@@ -34,6 +37,8 @@ function PlatformCard({ platform, onAdd, onRemove }) {
             <input
               type="text"
               placeholder="Enter profile URL"
+              value={inputValue} // Bind the input value to state
+              onChange={(e) => setInputValue(e.target.value)} // Update state as you type
               className="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
             />
           </div>
@@ -50,7 +55,8 @@ function PlatformCard({ platform, onAdd, onRemove }) {
         </button>
       ) : (
         <button
-          onClick={() => onAdd(platform.id)}
+          // CRITICAL FIX: Pass the tracked inputValue back up to ProfileSync.js
+          onClick={() => onAdd(platform.id, inputValue)}
           className="w-full py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-lg transition-colors shadow-sm"
         >
           Add

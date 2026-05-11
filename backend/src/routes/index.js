@@ -11,6 +11,7 @@ import { linkLeetcode } from "../controllers/platformController/leetcode/link.js
 import { generateUserAnalysis } from "../controllers/UserController/analysis.js"
 import {codeforcesSse} from "../controllers/platformController/codeforces/cfSseController.js"
 import auth from "../middleware/auth.js"
+import { logout } from "../controllers/UserController/logout.js"
 
 const router = express.Router()
 
@@ -26,6 +27,7 @@ router.get("/get-codeforces",auth,getCodeforcesDetails);
 router.post("/link-codeforces",auth,linkCodeforces);
 router.post("/link-leetcode",auth,linkLeetcode);
 router.get("/get-analysis",auth,generateUserAnalysis);
+router.post("/logout",auth,logout);
 
 // SSE route for Codeforces sync status
 router.get("/codeforcesSse", auth, codeforcesSse);

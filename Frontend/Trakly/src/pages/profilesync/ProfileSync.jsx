@@ -1,10 +1,12 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import PlatformCard from '../../components/Platform';
 
 // Import your Redux actions
 import { 
-  setInitialSyncData 
+  setInitialSyncData,
+  setLeetcodeHandle,
+  setCodeforcesHandle
 } from '../../store/profileSlice.js';
 
 // Make sure to define your backend URL
@@ -13,12 +15,15 @@ const BACKEND_URL = import.meta.env.VITE_API_BASE_URL;
 function ProfileSync() {
   const dispatch = useDispatch();
   
+  // NEW: Local state for handling the toast notification
+  const [toastMessage, setToastMessage] = useState('');
+  
   // Extract handles and data directly from Redux state
   const { 
     leetcodeHandle, 
-    codeforcesHandle, 
-    leetcodeData, 
-    codeforcesData 
+    codeforcesHandle,
+    codeforcesData,
+    leetcodeData
   } = useSelector((state) => state.profile);
 
   // Derive the platforms array dynamically from Redux
@@ -27,28 +32,32 @@ function ProfileSync() {
       id: 1, 
       name: 'LeetCode', 
       icon: '🍎', 
-      status: (leetcodeHandle || leetcodeData) ? 'Linked' : 'Not Linked', 
+      status: (leetcodeHandle) ? 'Linked' : 'Not Linked', 
       lastSynced: leetcodeData ? 'Synced' : null,
-      handle: leetcodeHandle || leetcodeData?.username || null
+      handle: leetcodeHandle || null
     },
     { 
       id: 2, 
       name: 'Codeforces', 
       icon: '🔵', 
-      status: (codeforcesHandle || codeforcesData) ? 'Linked' : 'Not Linked', 
+      status: (codeforcesHandle) ? 'Linked' : 'Not Linked', 
       lastSynced: codeforcesData ? 'Synced' : null,
       handle: codeforcesHandle || codeforcesData?.username || null
     },
   ];
 
+  // Helper function to show and auto-hide the toast
+  const showToast = (message) => {
+    setToastMessage(message);
+    setTimeout(() => setToastMessage(''), 5000); // Hides after 5 seconds
+  };
+
   const handleRemove = async (id) => {
-    // Dummy API call for backend reference
     try {
       await fetch('https://dummyjson.com/posts/1', {
         method: 'DELETE',
       });
       // Here you would eventually dispatch actions to clear the Redux state
-      // e.g., dispatch(clearLeetcodeData())
     } catch (err) {
       console.log('Dummy remove API failed');
     }
@@ -57,13 +66,17 @@ function ProfileSync() {
   const handleAdd = async (id, providedHandle) => {
     const platformToLink = platforms.find(p => p.id === id);
 
-    // --- LEETCODE LINKING & SYNC LOGIC ---
-    if (platformToLink.name === 'LeetCode') {
-      const handle = providedHandle || window.prompt("Please enter your LeetCode handle:");
-      if (!handle) return; 
+    // 1. STRICT CHECK: Ensure the user typed something in the input box
+    if (!providedHandle || providedHandle.trim() === '') {
+      alert(`Please input your ${platformToLink.name} handle in the text box before adding.`);
+      return; 
+    }
 
+    const handle = providedHandle.trim();
+
+    // --- LEETCODE LINKING LOGIC ---
+    if (platformToLink.name === 'LeetCode') {
       try {
-        // 1. Link the account
         const linkResponse = await fetch(`${BACKEND_URL}/link-leetcode`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -74,40 +87,22 @@ function ProfileSync() {
         if (linkResponse.ok) {
           // Instantly update UI with the handle
           dispatch(setLeetcodeHandle(handle));
-          alert("LeetCode account linked successfully! Syncing data...");
-
-          // 2. Make the call to sync LeetCode data
-          const syncResponse = await fetch(`${BACKEND_URL}/sync-leetcode`, {
-            method: 'GET',
-            credentials: 'include',
-          });
-
-          if (syncResponse.ok) {
-            const syncData = await syncResponse.json();
-            // Store the newly synced data in Redux
-            dispatch(setInitialSyncData({ 
-              leetcode: syncData.leetcode?.data || syncData.data || syncData 
-            }));
-          } else {
-             alert("Account linked, but failed to sync data immediately.");
-          }
+          
+          // Show the toast instructing them to use the dashboard sync
+          showToast("LeetCode account linked successfully! Please manually sync the platform by clicking the button on the dashboard.");
         } else {
           const data = await linkResponse.json();
           alert(data.message || "Failed to link LeetCode account.");
         }
       } catch (err) {
-        console.error('LeetCode link/sync API failed:', err);
-        alert("An error occurred while linking/syncing LeetCode.");
+        console.error('LeetCode link API failed:', err);
+        alert("An error occurred while linking LeetCode.");
       }
     } 
     
-    // --- CODEFORCES LINKING & SYNC LOGIC ---
+    // --- CODEFORCES LINKING LOGIC ---
     else if (platformToLink.name === 'Codeforces') {
-      const handle = providedHandle || window.prompt("Please enter your Codeforces handle:");
-      if (!handle) return; 
-
       try {
-        // 1. Link the account
         const linkResponse = await fetch(`${BACKEND_URL}/link-codeforces`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -118,15 +113,9 @@ function ProfileSync() {
         if (linkResponse.ok) {
           // Instantly update UI with the handle
           dispatch(setCodeforcesHandle(handle));
-          alert("Codeforces account linked! Sync queued in the background...");
-
-          // 2. Make the call to trigger Codeforces sync job
-          await fetch(`${BACKEND_URL}/sync-codeforces`, {
-            method: 'GET',
-            credentials: 'include',
-          });
           
-          // Note: Redux data update will happen via the SSE listener on the Dashboard once the worker finishes.
+          // Show the toast instructing them to use the dashboard sync
+          showToast("Codeforces account linked successfully! Please manually sync the platform by clicking the button on the dashboard.");
         } else {
           const data = await linkResponse.json();
           alert(data.message || "Failed to link Codeforces account.");
@@ -139,19 +128,25 @@ function ProfileSync() {
   };
 
   const handleUnlinkAll = async () => {
-    // Dummy API call for backend reference
     try {
       await fetch('https://dummyjson.com/posts/2', {
         method: 'DELETE',
       });
-      // Eventual Redux reset here
     } catch (err) {
       console.log('Dummy unlink all API failed');
     }
   };
 
   return (
-    <div className="flex-1 p-8 bg-gray-50 min-h-screen">
+    <div className="flex-1 p-8 bg-gray-50 min-h-screen relative">
+      {/* Toast Notification UI */}
+      {toastMessage && (
+        <div className="fixed bottom-10 right-10 bg-gray-800 text-white px-6 py-4 rounded-lg shadow-xl z-50 animate-fade-in-up flex items-center">
+          <span className="mr-3 text-green-400">✅</span>
+          <p className="text-sm font-medium">{toastMessage}</p>
+        </div>
+      )}
+
       {/* Header Section */}
       <header className="mb-10">
         <h2 className="text-3xl font-bold text-gray-900 mb-2">Platform Integrations</h2>
