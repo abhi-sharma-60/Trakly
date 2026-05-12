@@ -20,14 +20,14 @@ export const initialSyncCodeforces = async ({ userId, handle }) => {
     await new Promise((res) => setTimeout(res, 2000));
   }
 
-  const { totalSolved, topicStats } = countTopicWise(allSubmissions);
-
+  const { totalSolvedCount, topicStats } = countTopicWise(allSubmissions);
+  const lastSubmissionIndex = allSubmissions.length;
   // Process & store
   await UserPlatform.findOneAndUpdate(
     { user: userId, platform: "Codeforces" },
     {
       username: handle,
-      totalSolved,
+      totalSolved: totalSolvedCount,
       topicStats,
       lastSubmissionIndex,
       lastSyncedAt: new Date(),

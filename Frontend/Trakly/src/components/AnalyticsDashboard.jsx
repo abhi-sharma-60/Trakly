@@ -1,5 +1,5 @@
-// src/pages/AnalyticsDashboard.js
 import React from 'react';
+import { useSelector } from 'react-redux'; // <-- NEW: Import useSelector
 import StatCard from '../components/StatCard';
 import DifficultyDistributionChart from '../components/DifficultyDistributionChart';
 import TopicDistributionChart from '../components/TopicDistributionChart';
@@ -8,6 +8,14 @@ import WeakTopics from '../components/WeakTopics';
 import PracticeRecommendations from '../components/PracticeRecommendations';
 
 function AnalyticsDashboard() {
+  // <-- NEW: Extract data from Redux state
+  const { leetcodeData, codeforcesData } = useSelector((state) => state.profile);
+
+  // <-- NEW: Safely calculate combined total solved
+  const leetcodeSolved = leetcodeData?.totalSolved || 0;
+  const codeforcesSolved = codeforcesData?.totalSolved || 0;
+  const totalSolvedCombined = leetcodeSolved + codeforcesSolved;
+
   return (
     <div className="flex-1 p-8 bg-gray-50">
       
@@ -20,7 +28,7 @@ function AnalyticsDashboard() {
         
         <StatCard 
           title="Total Problems Solved" 
-          value="1234" 
+          value={totalSolvedCombined.toString()} // <-- UPDATED: Passed the dynamic Redux value
           subtext="75% of annual goal achieved" 
         />
         

@@ -7,11 +7,12 @@ import AnalyticsDashboard from '../../components/AnalyticsDashboard';
 import ProfileSync from '../profilesync/ProfileSync';
 import CodeExecution from '../codeexecution/CodeExecution';
 
-// Import your actions (ADDED setLeetcodeHandle here)
+// Import your actions (ADDED setCodeforcesHandle here)
 import { 
   setInitialSyncData, 
   updateCodeforcesData, 
-  setLeetcodeHandle 
+  setLeetcodeHandle,
+  setCodeforcesHandle
 } from '../../store/profileSlice.js'; 
 
 // ENV VARIABLES
@@ -33,8 +34,8 @@ function Dashboard() {
   const handleSyncLeetCode = async () => {
     showNotification("Starting LeetCode sync...");
     try {
-      const response = await fetch(`${BACKEND_URL}/sync/leetcode`, {
-        method: 'POST', 
+      const response = await fetch(`${BACKEND_URL}/sync-leetcode`, {
+        method: 'GET', 
         credentials: 'include',
       });
       
@@ -52,8 +53,8 @@ function Dashboard() {
   const handleSyncCodeforces = async () => {
     showNotification("Queuing Codeforces sync...");
     try {
-      const response = await fetch(`${BACKEND_URL}/sync/codeforces`, {
-        method: 'POST', 
+      const response = await fetch(`${BACKEND_URL}/sync-codeforces`, {
+        method: 'GET', 
         credentials: 'include',
       });
       
@@ -74,14 +75,8 @@ function Dashboard() {
     if (hasInitialized.current) return;
     hasInitialized.current = true;
 
-    // 1. Initial Sync Call
     const initiateSync = async () => {
-      // CHECK SESSION STORAGE: Ensure this only runs once per login session
-      const hasSynced = sessionStorage.getItem('hasSyncedInitial');
-      if (hasSynced === 'true') {
-        console.log("Initial sync already ran this session. Skipping.");
-        return;
-      }
+      // REMOVED THE SESSION STORAGE CHECK HERE
 
       try {
         const response = await fetch(`${BACKEND_URL}/sync`, {
@@ -96,18 +91,22 @@ function Dashboard() {
           // Dispatch data mapping to the new backend response structure
           dispatch(setInitialSyncData({ 
             leetcode: data.leetcode?.data, 
-            codeforces: null
+            codeforces: data.codeforces?.data 
           }));
 
-          // --- NEW: Extract and set the LeetCode handle in Redux ---
-          // It checks for either .username or .handle based on how you saved it in DB
+          // Extract and set the LeetCode handle in Redux
           const extractedLcHandle = data.leetcode?.data?.username || data.leetcode?.data?.handle;
           if (extractedLcHandle) {
             dispatch(setLeetcodeHandle(extractedLcHandle));
           }
+
+          // Extract and set the Codeforces handle in Redux
+          const extractedCfHandle = data.codeforces?.data?.username || data.codeforces?.data?.handle;
+          if (extractedCfHandle) {
+            dispatch(setCodeforcesHandle(extractedCfHandle));
+          }
           
-          // MARK AS SYNCED so it doesn't run again if the component remounts
-          sessionStorage.setItem('hasSyncedInitial', 'true');
+          // REMOVED SESSION STORAGE SETTER HERE
 
           showNotification("LeetCode synced successfully! Codeforces sync in progress...");
         } else {

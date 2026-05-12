@@ -1,5 +1,7 @@
 import UserModel from "../../../models/userModel.js";
 import UserPlatform from "../../../models/userPlatform.js";
+// NEW: Import your queue function (adjust the path if necessary)
+import { addCodeforcesSyncJob } from "../../../queues/cf.queue.js";
 
 export const linkCodeforces = async (req, res) => {
   try {
@@ -15,7 +17,7 @@ export const linkCodeforces = async (req, res) => {
     // 1. Check if user exists
     const user = await UserModel.findById(userId).lean();
     if (!user) {
-        console.log("not found");
+      console.log("not found");
       return res.status(404).json({
         message: "User not found ok",
       });
@@ -44,8 +46,15 @@ export const linkCodeforces = async (req, res) => {
       lastSyncedAt: null,
     });
 
+    // --- NEW: 4. Queue the Initial Sync Job ---
+    await addCodeforcesSyncJob({
+      type: "INITIAL_SYNC",
+      userId,
+      handle,
+    });
+
     return res.status(201).json({
-      message: "Codeforces account linked successfully",
+      message: "Codeforces account linked successfully and sync queued.",
       data: cfPlatform,
     });
   } catch (err) {
