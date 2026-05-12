@@ -1,3 +1,4 @@
+// src/pages/Dashboard.js
 import React, { useEffect, useState, useRef } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
@@ -7,15 +8,14 @@ import AnalyticsDashboard from '../../components/AnalyticsDashboard';
 import ProfileSync from '../profilesync/ProfileSync';
 import CodeExecution from '../codeexecution/CodeExecution';
 
-// Import your actions (ADDED setCodeforcesHandle here)
 import { 
   setInitialSyncData, 
   updateCodeforcesData, 
   setLeetcodeHandle,
-  setCodeforcesHandle
+  setCodeforcesHandle,
+  setUserAnalysisData 
 } from '../../store/profileSlice.js'; 
 
-// ENV VARIABLES
 const APP_NAME = import.meta.env.VITE_APP_NAME;
 const BACKEND_URL = import.meta.env.VITE_API_BASE_URL;
 
@@ -24,10 +24,35 @@ function Dashboard() {
   const hasInitialized = useRef(false);
   const dispatch = useDispatch();
 
-  // Helper function to show notifications temporarily
   const showNotification = (message) => {
     setNotification(message);
     setTimeout(() => setNotification(""), 5000);
+  };
+
+  // --- Analysis Handler (Generates NEW analysis) ---
+  const handleGenerateAnalysis = async () => {
+    showNotification("Generating AI Analysis... this may take a moment.");
+    try {
+      const response = await fetch(`${BACKEND_URL}/get-analysis`, {
+        method: 'GET',
+        credentials: 'include',
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        dispatch(setUserAnalysisData({
+          analysis: data.analysis,
+          recommendations: data.recommendations
+        }));
+        showNotification("Analysis generated successfully!");
+      } else {
+        showNotification(data.message || "Failed to generate analysis.");
+      }
+    } catch (error) {
+      console.error("Analysis Error:", error);
+      showNotification("Error connecting to analysis service.");
+    }
   };
 
   // --- Manual Sync Handlers ---
@@ -38,14 +63,9 @@ function Dashboard() {
         method: 'GET', 
         credentials: 'include',
       });
-      
-      if (response.ok) {
-        showNotification("LeetCode synced successfully!");
-      } else {
-        showNotification("Failed to sync LeetCode.");
-      }
+      if (response.ok) showNotification("LeetCode synced successfully!");
+      else showNotification("Failed to sync LeetCode.");
     } catch (error) {
-      console.error("Error during LeetCode sync:", error);
       showNotification("Error syncing LeetCode.");
     }
   };
@@ -57,165 +77,119 @@ function Dashboard() {
         method: 'GET', 
         credentials: 'include',
       });
-      
-      if (response.ok) {
-        showNotification("Codeforces sync queued. Waiting for completion...");
-      } else {
-        showNotification("Failed to queue Codeforces sync.");
-      }
+      if (response.ok) showNotification("Codeforces sync queued...");
+      else showNotification("Failed to queue Codeforces sync.");
     } catch (error) {
-      console.error("Error during Codeforces sync:", error);
       showNotification("Error queuing Codeforces sync.");
     }
   };
-  // ---------------------------------
 
   useEffect(() => {
-    // Prevent double-execution in React 18 Strict Mode during a single mount
     if (hasInitialized.current) return;
     hasInitialized.current = true;
 
+    // 1. Fetch initial platform sync data
     const initiateSync = async () => {
-      // REMOVED THE SESSION STORAGE CHECK HERE
-
       try {
         const response = await fetch(`${BACKEND_URL}/sync`, {
           method: 'GET',
           credentials: 'include', 
         });
-        
         if (response.ok) {
           const data = await response.json();
-          console.log("Initial sync data:", data);
-          
-          // Dispatch data mapping to the new backend response structure
           dispatch(setInitialSyncData({ 
             leetcode: data.leetcode?.data, 
             codeforces: data.codeforces?.data 
           }));
 
-          // Extract and set the LeetCode handle in Redux
           const extractedLcHandle = data.leetcode?.data?.username || data.leetcode?.data?.handle;
-          if (extractedLcHandle) {
-            dispatch(setLeetcodeHandle(extractedLcHandle));
-          }
+          if (extractedLcHandle) dispatch(setLeetcodeHandle(extractedLcHandle));
 
-          // Extract and set the Codeforces handle in Redux
           const extractedCfHandle = data.codeforces?.data?.username || data.codeforces?.data?.handle;
-          if (extractedCfHandle) {
-            dispatch(setCodeforcesHandle(extractedCfHandle));
-          }
-          
-          // REMOVED SESSION STORAGE SETTER HERE
-
-          showNotification("LeetCode synced successfully! Codeforces sync in progress...");
-        } else {
-          console.error("Failed to sync dashboard");
+          if (extractedCfHandle) dispatch(setCodeforcesHandle(extractedCfHandle));
         }
       } catch (error) {
-        console.error("Error during initial sync:", error);
+        console.error("Initial sync error:", error);
       }
     };
 
-    initiateSync();
-
-    // 2. Setup Server-Sent Events (SSE) for Codeforces
-    const setupSSE = () => {
-      const sse = new EventSource(`${BACKEND_URL}/codeforcesSse`, {
-        withCredentials: true,
-      });
-
-      sse.addEventListener("connected", (event) => {
-        console.log("SSE Connected:", event.data);
-      });
-
-      // --- Listen for specific success event ---
-      sse.addEventListener("CF_SYNC_COMPLETED", async (event) => {
-        const data = JSON.parse(event.data);
-        console.log("SSE Sync Completed:", data);
-        showNotification("Codeforces sync completed! Fetching latest data...");
+    // 2. NEW: Fetch existing AI Analysis data
+    const fetchExistingAnalysis = async () => {
+      try {
+        const response = await fetch(`${BACKEND_URL}/analysis`, {
+          method: 'GET',
+          credentials: 'include',
+        });
         
+        if (response.ok) {
+          const data = await response.json();
+          // Only dispatch if analysis actually exists
+          if (data.analysis) {
+            dispatch(setUserAnalysisData({
+              analysis: data.analysis,
+              recommendations: data.recommendations || []
+            }));
+          }
+        }
+      } catch (error) {
+        console.error("Failed to fetch existing analysis. User may not have generated one yet.", error);
+      }
+    };
+
+    // Execute initial fetches
+    initiateSync();
+    fetchExistingAnalysis();
+
+    // 3. Setup SSE
+    const setupSSE = () => {
+      const sse = new EventSource(`${BACKEND_URL}/codeforcesSse`, { withCredentials: true });
+      sse.addEventListener("CF_SYNC_COMPLETED", async (event) => {
+        showNotification("Codeforces sync completed! Fetching latest data...");
         try {
-          // Fetch the freshly synced Codeforces data using your specific route
-          const cfResponse = await fetch(`${BACKEND_URL}/get-codeforces`, {
-            method: 'GET',
-            credentials: 'include',
-          });
-          
+          const cfResponse = await fetch(`${BACKEND_URL}/get-codeforces`, { method: 'GET', credentials: 'include' });
           if (cfResponse.ok) {
             const cfData = await cfResponse.json();
-            console.log("Updated Codeforces Data fetched:", cfData);
-            
-            // Dispatch the newly fetched data directly to Redux
             dispatch(updateCodeforcesData(cfData));
           }
-        } catch (fetchErr) {
-          console.error("Failed to fetch updated Codeforces data", fetchErr);
-        }
+        } catch (err) { console.error(err); }
       });
-
-      // --- Listen for specific failure event ---
-      sse.addEventListener("CF_SYNC_FAILED", (event) => {
-        const data = JSON.parse(event.data);
-        console.error("SSE Sync Failed:", data.error);
-        showNotification(`Codeforces sync failed: ${data.error}`);
-        sse.close(); 
-      });
-
-      sse.onerror = (err) => {
-        console.error("SSE Error:", err);
-        sse.close(); 
-      };
-
+      sse.onerror = () => sse.close();
       return sse;
     };
 
     const sseConnection = setupSSE();
-
-    // Cleanup function when the component unmounts
-    return () => {
-      if (sseConnection) {
-        sseConnection.close();
-      }
-    };
-  }, [dispatch]); 
+    return () => sseConnection?.close();
+  }, [dispatch]);
 
   return (
     <div className="flex h-screen bg-gray-100 relative">
-      
-      {/* Toast Notification */}
       {notification && (
-        <div className="absolute top-4 right-4 z-50 bg-green-600 text-white px-6 py-3 rounded-md shadow-lg transition-all duration-300">
+        <div className="absolute top-4 right-4 z-50 bg-green-600 text-white px-6 py-3 rounded-md shadow-lg">
           {notification}
         </div>
       )}
 
-      {/* Sidebar */}
       <Sidebar />
-      
-      {/* Main Content Area */}
       <div className="flex flex-col flex-1 overflow-hidden">
-        
-        {/* Header */}
         <Header />
 
-        {/* Action Bar for Manual Syncs */}
+        {/* Action Bar */}
         <div className="bg-white border-b border-gray-200 px-6 py-3 flex space-x-4 items-center shadow-sm z-10">
-          <button 
-            onClick={handleSyncLeetCode}
-            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded shadow text-sm font-medium transition-colors duration-200"
-          >
+          <button onClick={handleSyncLeetCode} className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded shadow text-sm font-medium transition-all">
             Sync LeetCode
           </button>
-          <button 
-            onClick={handleSyncCodeforces}
-            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded shadow text-sm font-medium transition-colors duration-200"
-          >
+          <button onClick={handleSyncCodeforces} className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded shadow text-sm font-medium transition-all">
             Sync Codeforces
+          </button>
+          
+          <button 
+            onClick={handleGenerateAnalysis} 
+            className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded shadow text-sm font-medium transition-all"
+          >
+            Generate AI Analysis
           </button>
         </div>
         
-        {/* Routed Content */}
         <main className="flex-1 overflow-x-hidden overflow-y-auto">
           <Routes>
             <Route path="/" element={<Navigate to="analytics" />} />
@@ -225,35 +199,8 @@ function Dashboard() {
           </Routes>
         </main>
         
-        {/* Footer */}
-        <footer className="flex justify-between items-center p-4 bg-white border-t border-gray-200 text-xs text-gray-500">
+        <footer className="flex justify-between items-center p-4 bg-white border-t text-xs text-gray-500">
           <p>© 2025 {APP_NAME}. All rights reserved.</p>
-          <div className="space-x-4">
-            <a
-              href="https://github.com/abhi-sharma-60"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="hover:text-gray-700"
-            >
-              GitHub
-            </a>
-            <a
-              href="https://www.instagram.com/_abhiisharmaa_/"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="hover:text-gray-700"
-            >
-              Instagram
-            </a>
-            <a
-              href="https://www.linkedin.com/in/abhishek-sharma-mnnit27/"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="hover:text-gray-700"
-            >
-              LinkedIn
-            </a>
-          </div>
         </footer>
       </div>
     </div>

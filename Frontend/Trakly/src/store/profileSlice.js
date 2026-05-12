@@ -1,3 +1,4 @@
+// src/store/profileSlice.js
 import { createSlice } from '@reduxjs/toolkit';
 
 const initialState = {
@@ -5,6 +6,8 @@ const initialState = {
   codeforcesHandle: null,
   leetcodeData: null,
   codeforcesData: null,
+  analysis: null,        // NEW: Stores AI analysis text/object
+  recommendations: [],   // NEW: Stores AI problem recommendations
   isSyncing: false,
 };
 
@@ -12,7 +15,6 @@ const profileSlice = createSlice({
   name: 'profile',
   initialState,
   reducers: {
-    // Used when the app first loads and fetches the initial DB state
     setInitialSyncData: (state, action) => {
       if (action.payload.leetcode) {
         state.leetcodeData = action.payload.leetcode;
@@ -21,20 +23,22 @@ const profileSlice = createSlice({
         state.codeforcesData = action.payload.codeforces;
       }
     },
-    // Used specifically when the SSE worker finishes its background job
     updateCodeforcesData: (state, action) => {
       state.codeforcesData = action.payload;
     },
-    // Optional: useful if you want to show a global loading spinner
     setSyncingStatus: (state, action) => {
       state.isSyncing = action.payload;
     },
-    // --- NEW REDUCERS ---
     setLeetcodeHandle: (state, action) => {
       state.leetcodeHandle = action.payload;
     },
     setCodeforcesHandle: (state, action) => {
       state.codeforcesHandle = action.payload;
+    },
+    // NEW: Reducer to store AI results
+    setUserAnalysisData: (state, action) => {
+      state.analysis = action.payload.analysis;
+      state.recommendations = action.payload.recommendations;
     }
   },
 });
@@ -44,7 +48,8 @@ export const {
   updateCodeforcesData, 
   setSyncingStatus,
   setLeetcodeHandle,
-  setCodeforcesHandle 
+  setCodeforcesHandle,
+  setUserAnalysisData // NEW
 } = profileSlice.actions;
 
 export default profileSlice.reducer;

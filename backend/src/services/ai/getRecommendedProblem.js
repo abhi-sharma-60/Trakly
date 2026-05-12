@@ -9,7 +9,7 @@ import CfProblemModel from "../../models/cfProblemModel.js";
  */
 export const getRecommendedProblems = async (analysisResult) => {
   const recommendations = [];
-  const usedProblemIds = new Set(); // 🔑 dedupe set
+  const usedProblemIds = []; // 🔑 Array instead of Set for Mongoose $nin operator
 
   if (!analysisResult?.practicePlan?.length) {
     return recommendations;
@@ -18,32 +18,25 @@ export const getRecommendedProblems = async (analysisResult) => {
   for (const plan of analysisResult.practicePlan) {
     const { topic, recommendedRating } = plan;
 
+    // Fetch exactly 5 problems, excluding any we have already used
     const problems = await CfProblemModel.find({
-      topic,
+      topic, // Note: if your DB schema uses 'tags', this should be `tags: topic`
       rating: recommendedRating,
+      _id: { $nin: usedProblemIds } // 🚀 DB-Level Deduplication!
     })
       .sort({ solvedCount: -1 })
-      .limit(10) // fetch extra to allow dedup
+      .limit(5) // Just grab exactly what we need
       .lean();
 
-    const uniqueProblems = [];
+    if (problems.length) {
+      // Add the newly found problem IDs to our used list
+      // We push the raw ObjectIds so Mongoose can use them in the next loop's $nin
+      problems.forEach((p) => usedProblemIds.push(p._id));
 
-    for (const p of problems) {
-      const id = p._id.toString();
-
-      if (!usedProblemIds.has(id)) {
-        usedProblemIds.add(id);
-        uniqueProblems.push(p);
-      }
-
-      if (uniqueProblems.length === 5) break; // only top 5
-    }
-
-    if (uniqueProblems.length) {
       recommendations.push({
         topic,
         recommendedRating,
-        problems: uniqueProblems,
+        problems, // They are already unique and limited to 5!
       });
     }
   }

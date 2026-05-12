@@ -1,4 +1,5 @@
 // models/UserStats.js
+// not in use currently
 import mongoose from "mongoose";
 
 const userStatsSchema = new mongoose.Schema({
