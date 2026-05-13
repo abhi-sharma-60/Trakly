@@ -1,7 +1,5 @@
-import UserModel from "../../models/userModel.js"
+import UserModel from "../../models/userModel.js";
 import UserPlatform from "../../models/userPlatform.js";
-//import LeetCodeProfile from "../../models/LeetCodeProfile.js";
-
 import { addCodeforcesSyncJob } from "../../queues/cf.queue.js";
 import { syncLeetCode } from "../../services/leetcode/leetcodeSync.js";
 
@@ -9,50 +7,52 @@ export const syncDashboard = async (req, res) => {
   try {
     const userId = req.userId;
 
-    // 1. Fetch user & handles
-    const user = await UserModel.findById(userId).lean();
+    // 1. Fetch user and ALL their platforms simultaneously in ONE database trip
+    const [user, platforms] = await Promise.all([
+      UserModel.findById(userId).lean(),
+      UserPlatform.find({ user: userId, platform: { $in: ["Codeforces", "LeetCode"] } }).lean()
+    ]);
 
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
 
-    const codeforcesHandle = await UserPlatform.findOne({user:userId,platform:"Codeforces"});
-    const leetcodeHandle = await UserPlatform.findOne({user:userId,platform:"LeetCode"});
+    // Extract individual profiles from the array
+    const cfProfile = platforms.find(p => p.platform === "Codeforces");
+    const lcProfile = platforms.find(p => p.platform === "LeetCode");
 
-    // 2. Trigger Codeforces sync (ASYNC)
-    if (codeforcesHandle) {
-      await addCodeforcesSyncJob({
+    // 2. Trigger Codeforces sync (Background Queue)
+    if (cfProfile?.username) {
+      // Notice we are NOT awaiting this. We fire and forget!
+      addCodeforcesSyncJob({
         type: "NORMAL_SYNC",
         userId,
-        handle: codeforcesHandle.username,
-      });
+        handle: cfProfile.username,
+      }).catch(err => console.error("CF Queue Error:", err)); 
     }
 
-    // 3. Sync LeetCode (INLINE – no queue)
-    if (leetcodeHandle) {
-      await syncLeetCode({
+    // 3. Trigger LeetCode sync (Background Execution)
+    if (lcProfile?.username) {
+      // Notice there is NO 'await' here. This tells Node.js to start syncing 
+      // in the background, but continue executing the rest of the code immediately.
+      syncLeetCode({
         userId,
-        handle: leetcodeHandle.username,
-      });
+        handle: lcProfile.username,
+      }).catch(err => console.error("LC Sync Error:", err));
     }
 
-    // 4. Fetch latest known data from DB
-    const [cfProfile, lcProfile] = await Promise.all([
-      UserPlatform.findOne({ user:userId,platform:"Codeforces" }).lean(),
-      UserPlatform.findOne({ user:userId,platform:"LeetCode" }).lean(),
-    ]);
-
-    // 5. Respond immediately
+    // 4. Respond immediately with the stale/cached data currently in the DB
     return res.json({
       codeforces: {
-        data: cfProfile,
-        syncStatus: "IDLE",
+        data: cfProfile || null,
+        syncStatus: cfProfile ? "SYNCING_IN_BACKGROUND" : "IDLE",
       },
       leetcode: {
-        data: lcProfile,
-        syncStatus: "COMPLETED",
+        data: lcProfile || null,
+        syncStatus: lcProfile ? "SYNCING_IN_BACKGROUND" : "IDLE",
       },
     });
+
   } catch (err) {
     console.error("Dashboard sync error:", err);
     res.status(500).json({ message: "Internal server error" });
