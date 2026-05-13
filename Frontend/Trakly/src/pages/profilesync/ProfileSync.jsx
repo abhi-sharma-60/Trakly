@@ -4,9 +4,10 @@ import PlatformCard from '../../components/Platform';
 
 // Import your Redux actions
 import { 
-  setInitialSyncData,
   setLeetcodeHandle,
-  setCodeforcesHandle
+  setCodeforcesHandle,
+  unlinkLeetcode,
+  unlinkCodeforces
 } from '../../store/profileSlice.js';
 
 // Make sure to define your backend URL
@@ -15,7 +16,7 @@ const BACKEND_URL = import.meta.env.VITE_API_BASE_URL;
 function ProfileSync() {
   const dispatch = useDispatch();
   
-  // NEW: Local state for handling the toast notification
+  // Local state for handling the toast notification
   const [toastMessage, setToastMessage] = useState('');
   
   // Extract handles and data directly from Redux state
@@ -52,21 +53,11 @@ function ProfileSync() {
     setTimeout(() => setToastMessage(''), 5000); // Hides after 5 seconds
   };
 
-  const handleRemove = async (id) => {
-    try {
-      await fetch('https://dummyjson.com/posts/1', {
-        method: 'DELETE',
-      });
-      // Here you would eventually dispatch actions to clear the Redux state
-    } catch (err) {
-      console.log('Dummy remove API failed');
-    }
-  };
-
+  // --- ADD / LINK PLATFORM LOGIC ---
   const handleAdd = async (id, providedHandle) => {
     const platformToLink = platforms.find(p => p.id === id);
 
-    // 1. STRICT CHECK: Ensure the user typed something in the input box
+    // Ensure the user typed something in the input box
     if (!providedHandle || providedHandle.trim() === '') {
       alert(`Please input your ${platformToLink.name} handle in the text box before adding.`);
       return; 
@@ -74,7 +65,7 @@ function ProfileSync() {
 
     const handle = providedHandle.trim();
 
-    // --- LEETCODE LINKING LOGIC ---
+    // LEETCODE LINKING
     if (platformToLink.name === 'LeetCode') {
       try {
         const linkResponse = await fetch(`${BACKEND_URL}/link-leetcode`, {
@@ -85,11 +76,8 @@ function ProfileSync() {
         });
 
         if (linkResponse.ok) {
-          // Instantly update UI with the handle
           dispatch(setLeetcodeHandle(handle));
-          
-          // Show the toast instructing them to use the dashboard sync
-          showToast("LeetCode account linked successfully! Please manually sync the platform by clicking the button on the dashboard.");
+          showToast("LeetCode account linked successfully! Please manually sync the platform from the dashboard.");
         } else {
           const data = await linkResponse.json();
           alert(data.message || "Failed to link LeetCode account.");
@@ -100,7 +88,7 @@ function ProfileSync() {
       }
     } 
     
-    // --- CODEFORCES LINKING LOGIC ---
+    // CODEFORCES LINKING
     else if (platformToLink.name === 'Codeforces') {
       try {
         const linkResponse = await fetch(`${BACKEND_URL}/link-codeforces`, {
@@ -111,11 +99,8 @@ function ProfileSync() {
         });
 
         if (linkResponse.ok) {
-          // Instantly update UI with the handle
           dispatch(setCodeforcesHandle(handle));
-          
-          // Show the toast instructing them to use the dashboard sync
-          showToast("Codeforces account linked successfully! Please manually sync the platform by clicking the button on the dashboard.");
+          showToast("Codeforces account linked successfully! Please manually sync the platform from the dashboard.");
         } else {
           const data = await linkResponse.json();
           alert(data.message || "Failed to link Codeforces account.");
@@ -127,13 +112,80 @@ function ProfileSync() {
     }
   };
 
+  // --- REMOVE / UNLINK PLATFORM LOGIC ---
+  const handleRemove = async (id) => {
+    const platformToRemove = platforms.find(p => p.id === id);
+
+    const confirmDelete = window.confirm(`Are you sure you want to unlink your ${platformToRemove.name} account?`);
+    if (!confirmDelete) return;
+
+    // LEETCODE UNLINKING
+    if (platformToRemove.name === 'LeetCode') {
+      try {
+        const response = await fetch(`${BACKEND_URL}/delete-leetcode`, {
+          method: 'DELETE',
+          credentials: 'include', 
+        });
+
+        if (response.ok) {
+          dispatch(unlinkLeetcode());
+          showToast("LeetCode account unlinked successfully.");
+        } else {
+          const data = await response.json();
+          alert(data.message || "Failed to unlink LeetCode account.");
+        }
+      } catch (err) {
+        console.error('LeetCode unlink API failed:', err);
+        alert("An error occurred while unlinking LeetCode.");
+      }
+    } 
+    
+    // CODEFORCES UNLINKING
+    else if (platformToRemove.name === 'Codeforces') {
+      try {
+        const response = await fetch(`${BACKEND_URL}/delete-codeforces`, {
+          method: 'DELETE',
+          credentials: 'include', 
+        });
+
+        if (response.ok) {
+          dispatch(unlinkCodeforces());
+          showToast("Codeforces account unlinked successfully.");
+        } else {
+          const data = await response.json();
+          alert(data.message || "Failed to unlink Codeforces account.");
+        }
+      } catch (err) {
+        console.error('Codeforces unlink API failed:', err);
+        alert("An error occurred while unlinking Codeforces.");
+      }
+    }
+  };
+
+  // --- UNLINK ALL LOGIC ---
   const handleUnlinkAll = async () => {
+    const confirmDelete = window.confirm("Are you sure you want to unlink ALL connected accounts?");
+    if (!confirmDelete) return;
+
     try {
-      await fetch('https://dummyjson.com/posts/2', {
+      const response = await fetch(`${BACKEND_URL}/delete-all`, {
         method: 'DELETE',
+        credentials: 'include',
       });
+
+      if (response.ok) {
+        // Clear both from Redux
+        dispatch(unlinkLeetcode());
+        dispatch(unlinkCodeforces());
+        
+        showToast("All profiles unlinked successfully.");
+      } else {
+        const data = await response.json();
+        alert(data.message || "Failed to unlink profiles.");
+      }
     } catch (err) {
-      console.log('Dummy unlink all API failed');
+      console.error('Bulk unlink failed:', err);
+      alert("An error occurred while attempting to unlink all profiles.");
     }
   };
 

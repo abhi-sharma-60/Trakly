@@ -13,6 +13,9 @@ import {codeforcesSse} from "../controllers/platformController/codeforces/cfSseC
 import auth from "../middleware/auth.js"
 import { logout } from "../controllers/UserController/logout.js"
 import { getAnalysis } from "../controllers/UserController/getAnalysis.js"
+import { unlinkCodeforces } from "../controllers/platformController/codeforces/unlink.js"
+import { unlinkLeetCode } from "../controllers/platformController/leetcode/unlink.js"
+import { unlinkAllPlatforms } from "../controllers/platformController/unlink.js"
 
 const router = express.Router()
 
@@ -30,6 +33,9 @@ router.post("/link-leetcode",auth,linkLeetcode);
 router.get("/get-analysis",auth,generateUserAnalysis);
 router.post("/logout",auth,logout);
 router.get("/analysis",auth,getAnalysis)
+router.delete("/delete-leetcode",auth,unlinkLeetCode)
+router.delete("/delete-codeforces",auth,unlinkCodeforces)
+router.delete("/delete-all",auth,unlinkAllPlatforms)
 
 // SSE route for Codeforces sync status
 router.get("/codeforcesSse", auth, codeforcesSse);

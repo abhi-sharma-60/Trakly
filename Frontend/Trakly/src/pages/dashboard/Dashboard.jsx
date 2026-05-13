@@ -8,9 +8,11 @@ import AnalyticsDashboard from '../../components/AnalyticsDashboard';
 import ProfileSync from '../profilesync/ProfileSync';
 import CodeExecution from '../codeexecution/CodeExecution';
 
+// IMPORT updateLeetcodeData HERE
 import { 
   setInitialSyncData, 
   updateCodeforcesData, 
+  updateLeetcodeData,  
   setLeetcodeHandle,
   setCodeforcesHandle,
   setUserAnalysisData 
@@ -29,7 +31,7 @@ function Dashboard() {
     setTimeout(() => setNotification(""), 5000);
   };
 
-  // --- Analysis Handler (Generates NEW analysis) ---
+  // --- Analysis Handler ---
   const handleGenerateAnalysis = async () => {
     showNotification("Generating AI Analysis... this may take a moment.");
     try {
@@ -63,9 +65,23 @@ function Dashboard() {
         method: 'GET', 
         credentials: 'include',
       });
-      if (response.ok) showNotification("LeetCode synced successfully!");
-      else showNotification("Failed to sync LeetCode.");
+      
+      if (response.ok) {
+        // 1. Parse the new data from the backend response
+        const lcData = await response.json();
+        console.log(response)
+        // 2. Extract the actual data payload (handles APIs that wrap in { data: {...} })
+        const payloadData = lcData.data ? lcData.data : lcData;
+        
+        // 3. Update Redux instantly
+        dispatch(updateLeetcodeData(payloadData));
+        
+        showNotification("LeetCode synced successfully!");
+      } else {
+        showNotification("Failed to sync LeetCode.");
+      }
     } catch (error) {
+      console.error("LeetCode Sync Error:", error);
       showNotification("Error syncing LeetCode.");
     }
   };
@@ -77,13 +93,20 @@ function Dashboard() {
         method: 'GET', 
         credentials: 'include',
       });
-      if (response.ok) showNotification("Codeforces sync queued...");
-      else showNotification("Failed to queue Codeforces sync.");
+      if (response.ok) {
+        showNotification("Codeforces sync queued...");
+        // Note: Redux is updated automatically when the SSE listener hears "CF_SYNC_COMPLETED"
+      } else {
+        showNotification("Failed to queue Codeforces sync.");
+      }
     } catch (error) {
       showNotification("Error queuing Codeforces sync.");
     }
   };
 
+  // =========================================================================
+  // EFFECT 1: Fetch Initial Data (Guarded by hasInitialized)
+  // =========================================================================
   useEffect(() => {
     if (hasInitialized.current) return;
     hasInitialized.current = true;
@@ -113,7 +136,7 @@ function Dashboard() {
       }
     };
 
-    // 2. NEW: Fetch existing AI Analysis data
+    // 2. Fetch existing AI Analysis data
     const fetchExistingAnalysis = async () => {
       try {
         const response = await fetch(`${BACKEND_URL}/analysis`, {
@@ -123,7 +146,6 @@ function Dashboard() {
         
         if (response.ok) {
           const data = await response.json();
-          // Only dispatch if analysis actually exists
           if (data.analysis) {
             dispatch(setUserAnalysisData({
               analysis: data.analysis,
@@ -132,33 +154,47 @@ function Dashboard() {
           }
         }
       } catch (error) {
-        console.error("Failed to fetch existing analysis. User may not have generated one yet.", error);
+        console.error("Failed to fetch existing analysis.", error);
       }
     };
 
-    // Execute initial fetches
     initiateSync();
     fetchExistingAnalysis();
+  }, [dispatch]);
 
-    // 3. Setup SSE
-    const setupSSE = () => {
-      const sse = new EventSource(`${BACKEND_URL}/codeforcesSse`, { withCredentials: true });
-      sse.addEventListener("CF_SYNC_COMPLETED", async (event) => {
-        showNotification("Codeforces sync completed! Fetching latest data...");
-        try {
-          const cfResponse = await fetch(`${BACKEND_URL}/get-codeforces`, { method: 'GET', credentials: 'include' });
-          if (cfResponse.ok) {
-            const cfData = await cfResponse.json();
-            dispatch(updateCodeforcesData(cfData));
-          }
-        } catch (err) { console.error(err); }
-      });
-      sse.onerror = () => sse.close();
-      return sse;
+
+  // =========================================================================
+  // EFFECT 2: Manage SSE Connection (Un-guarded so it survives Strict Mode)
+  // =========================================================================
+  useEffect(() => {
+    const sse = new EventSource(`${BACKEND_URL}/codeforcesSse`, { withCredentials: true });
+    
+    sse.addEventListener("CF_SYNC_COMPLETED", async (event) => {
+      showNotification("Codeforces sync completed! Updating your profile...");
+      try {
+        const cfResponse = await fetch(`${BACKEND_URL}/get-codeforces`, { 
+          method: 'GET', 
+          credentials: 'include' 
+        });
+        
+        if (cfResponse.ok) {
+          const cfData = await cfResponse.json();
+          const payloadData = cfData.data ? cfData.data : cfData;
+          dispatch(updateCodeforcesData(payloadData));
+        }
+      } catch (err) { 
+        console.error("Error fetching updated Codeforces data:", err); 
+      }
+    });
+
+    sse.onerror = (err) => {
+      console.error("SSE Connection Error", err);
+      sse.close();
     };
 
-    const sseConnection = setupSSE();
-    return () => sseConnection?.close();
+    return () => {
+      sse.close();
+    };
   }, [dispatch]);
 
   return (

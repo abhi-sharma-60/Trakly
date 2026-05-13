@@ -39,7 +39,18 @@ const profileSlice = createSlice({
     setUserAnalysisData: (state, action) => {
       state.analysis = action.payload.analysis;
       state.recommendations = action.payload.recommendations;
-    }
+    },
+    unlinkLeetcode: (state) => {
+      state.leetcodeHandle = null;
+      state.leetcodeData = null;
+    },
+    unlinkCodeforces: (state) => {
+      state.codeforcesHandle = null;
+      state.codeforcesData = null;
+    },
+    updateLeetcodeData: (state, action) => {
+      state.leetcodeData = action.payload;
+    },
   },
 });
 
@@ -49,7 +60,10 @@ export const {
   setSyncingStatus,
   setLeetcodeHandle,
   setCodeforcesHandle,
-  setUserAnalysisData // NEW
+  setUserAnalysisData, // NEW
+  unlinkLeetcode,     // <-- export the new action
+  unlinkCodeforces,    // <-- export the new action
+  updateLeetcodeData
 } = profileSlice.actions;
 
 export default profileSlice.reducer;
