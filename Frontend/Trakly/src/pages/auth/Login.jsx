@@ -3,14 +3,11 @@ import InfoCard from "../auth/InfoCard.jsx";
 import { FcGoogle } from "react-icons/fc";
 import { Link, useNavigate } from "react-router-dom";
 import Logo from "../../components/Logo.jsx";
+import { useGoogleLogin } from "@react-oauth/google"; // ✅ Imported Google hook
 
-// Assuming Tailwind CSS setup in your project (e.g., via PostCSS/Vite/Next.js)
-// We remove the import '../../index.css'; as styling is now inline via Tailwind classes.
-
-// ✅ ENV VARIABLES (ADDED — nothing removed)
+// ✅ ENV VARIABLES
 const APP_NAME = import.meta.env.VITE_APP_NAME;
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
-const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID;
 
 function Login() {
   // 1. STATE MANAGEMENT
@@ -73,6 +70,48 @@ function Login() {
       setIsLoading(false);
     }
   };
+
+  // ✅ ADDED: GOOGLE LOGIN HANDLER
+  const googleLoginHandler = useGoogleLogin({
+    onSuccess: async (tokenResponse) => {
+      try {
+        setIsLoading(true);
+        setError("");
+        
+        // Send the Google Access Token to our Backend
+        const response = await fetch(`${API_BASE_URL}/google-login`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          credentials: "include",
+          body: JSON.stringify({
+            googleAccessToken: tokenResponse.access_token,
+          }),
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(data.message || "Google login failed.");
+        }
+
+        // Successful login
+        console.log("Auth Token:", data.token);
+        navigate("/dashboard");
+      } catch (err) {
+        console.log(err)
+        console.log("error google")
+        setError(err || "Network error occurred during Google login.");
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    onError: (errorResponse) => {
+      console.error("Google Login Error:", errorResponse);
+      setError("Failed to connect to Google.");
+    },
+  });
 
   // 4. JSX (UI Rendering with Tailwind CSS Classes)
   return (
@@ -188,16 +227,13 @@ function Login() {
                 <div className="flex-grow border-t border-gray-300"></div>
               </div>
 
-              {/* Sign In with Google Button */}
+              {/* ✅ Sign In with Google Button (UPDATED) */}
               <button
                 type="button"
                 className="w-full flex items-center justify-center py-3 border border-gray-300 rounded-lg 
                            text-gray-700 font-semibold bg-white hover:bg-gray-50 transition duration-150 shadow-sm"
                 disabled={isLoading}
-                onClick={() => {
-                  console.log("Google Client ID:", GOOGLE_CLIENT_ID);
-                  alert("Initiating Google sign-in flow...");
-                }}
+                onClick={() => googleLoginHandler()} 
               >
                 <span className="text-lg mr-2 font-bold">
                   <FcGoogle />

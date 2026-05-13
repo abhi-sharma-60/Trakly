@@ -7,6 +7,10 @@ const initialState = {
   leetcodeData: null,
   codeforcesData: null,
   analysis: null,        // NEW: Stores AI analysis text/object
+  combinedAnalytics: {
+    heatmap: {},
+    topicStats: {}
+  },
   recommendations: [],   // NEW: Stores AI problem recommendations
   isSyncing: false,
 };
@@ -51,6 +55,9 @@ const profileSlice = createSlice({
     updateLeetcodeData: (state, action) => {
       state.leetcodeData = action.payload;
     },
+    setCombinedAnalytics: (state, action) => {
+      state.combinedAnalytics = action.payload;
+    }
   },
 });
 
@@ -63,7 +70,8 @@ export const {
   setUserAnalysisData, // NEW
   unlinkLeetcode,     // <-- export the new action
   unlinkCodeforces,    // <-- export the new action
-  updateLeetcodeData
+  updateLeetcodeData,
+  setCombinedAnalytics
 } = profileSlice.actions;
 
 export default profileSlice.reducer;

@@ -2,11 +2,11 @@ import React from 'react';
 import { useSelector } from 'react-redux';
 
 function TopicDistributionChart() {
-  // 1. Pull Codeforces data from Redux
-  const { codeforcesData } = useSelector((state) => state.profile);
+  // 1. Pull the newly combined analytics data from Redux!
+  const { combinedAnalytics } = useSelector((state) => state.profile);
 
   // 2. Extract topicStats (default to empty object if loading)
-  const topicStats = codeforcesData?.topicStats || {};
+  const topicStats = combinedAnalytics?.topicStats || {};
 
   // 3. Dynamically build the topics array
   const topics = Object.entries(topicStats)
@@ -17,17 +17,17 @@ function TopicDistributionChart() {
   // 4. Calculate the max value dynamically so the tallest bar is always scaled perfectly
   const maxValue = topics.length > 0 ? Math.max(...topics.map(t => t.value)) : 1;
   
-  // INCREASED: Define a slightly taller base height for visual clarity (h-56 = 224px)
+  // Define a slightly taller base height for visual clarity (h-56 = 224px)
   const chartHeightPx = 224; 
 
   return (
     <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 h-full flex flex-col">
-      <h4 className="text-sm font-medium text-gray-500 mb-6">Topic Distribution</h4>
+      <h4 className="text-sm font-medium text-gray-500 mb-6">Combined Topic Distribution</h4>
       
       {/* Scrollable Container */}
       <div className="flex-1 overflow-x-auto pb-4">
         
-        {/* UPDATED: Changed h-48 to h-56 and added pt-4 to give the top numbers extra room */}
+        {/* Changed h-48 to h-56 and added pt-4 to give the top numbers extra room */}
         <div className="flex space-x-6 h-56 items-end p-2 pt-4 border-l border-b border-gray-300 min-w-max">
           
           {topics.length === 0 ? (
@@ -36,7 +36,7 @@ function TopicDistributionChart() {
             </div>
           ) : (
             topics.map((topic, index) => {
-              // FIX: Scaled down to 65% (0.65) of max height instead of 80% to ensure the label fits
+              // Scaled down to 65% (0.65) of max height instead of 80% to ensure the label fits
               const barHeight = (topic.value / maxValue) * chartHeightPx * 0.65; 
               
               return (

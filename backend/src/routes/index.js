@@ -1,7 +1,6 @@
 import express from "express"
 import login from "../controllers/UserController/login.js"
 import signup from "../controllers/UserController/signup.js"
-import googleLogin from "../controllers/UserController/googleLogin.js"
 import { syncDashboard } from "../controllers/platformController/syncUserStats.js"
 import { syncLeetCodeManual } from "../controllers/platformController/leetcode/sync.js"
 import { syncCodeforces } from "../controllers/platformController/codeforces/sync.js"
@@ -16,12 +15,14 @@ import { getAnalysis } from "../controllers/UserController/getAnalysis.js"
 import { unlinkCodeforces } from "../controllers/platformController/codeforces/unlink.js"
 import { unlinkLeetCode } from "../controllers/platformController/leetcode/unlink.js"
 import { unlinkAllPlatforms } from "../controllers/platformController/unlink.js"
+import { googleLogin } from "../controllers/UserController/googleLogin.js"
+import { getAnalyticsData } from "../controllers/platformController/getAnalytics.js"
 
 const router = express.Router()
 
 router.post("/login",login);
 router.post("/auth/signup",signup);
-router.get("/google-login",googleLogin);
+router.post("/google-login",googleLogin);
 
 //protected routes
 router.get("/sync",auth,syncDashboard);
@@ -36,6 +37,8 @@ router.get("/analysis",auth,getAnalysis)
 router.delete("/delete-leetcode",auth,unlinkLeetCode)
 router.delete("/delete-codeforces",auth,unlinkCodeforces)
 router.delete("/delete-all",auth,unlinkAllPlatforms)
+router.get('/analytics',auth,getAnalyticsData)
+
 
 // SSE route for Codeforces sync status
 router.get("/codeforcesSse", auth, codeforcesSse);

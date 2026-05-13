@@ -44,7 +44,11 @@ const userPlatformSchema = new mongoose.Schema(
     },
     rating: Number,        // CF rating, CC rating
     rank: Number,          // optional
-
+    heatmap: {
+      type: Map,
+      of: Number,
+      default: {}
+    },
     lastSyncedAt: {
       type: Date
     }

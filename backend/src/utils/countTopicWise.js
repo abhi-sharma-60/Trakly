@@ -15,11 +15,18 @@ export const countTopicWise = (submissions) => {
     Other: 0,
   };
 
+  const heatmapData = {};
   let lastQuestionID = 0;
 
   for (const sub of submissions) {
     // Only accepted solutions
     if (sub.verdict !== "OK") continue;
+
+    if (sub.creationTimeSeconds) {
+      const dayTimestamp = Math.floor(sub.creationTimeSeconds / 86400) * 86400;
+      const key = dayTimestamp.toString();
+      heatmapData[key] = (heatmapData[key] || 0) + 1;
+    }
 
     const problem = sub.problem;
     if (!problem) continue;
@@ -55,5 +62,6 @@ export const countTopicWise = (submissions) => {
   return {
     totalSolvedCount: solvedProblems.size,
     topicStats,
+    heatmapData
   };
 };

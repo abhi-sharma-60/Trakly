@@ -20,7 +20,7 @@ export const initialSyncCodeforces = async ({ userId, handle }) => {
     await new Promise((res) => setTimeout(res, 2000));
   }
 
-  const { totalSolvedCount, topicStats } = countTopicWise(allSubmissions);
+  const { totalSolvedCount, topicStats, heatmapData } = countTopicWise(allSubmissions);
   const lastSubmissionIndex = allSubmissions.length;
   // Process & store
   await UserPlatform.findOneAndUpdate(
@@ -29,6 +29,7 @@ export const initialSyncCodeforces = async ({ userId, handle }) => {
       username: handle,
       totalSolved: totalSolvedCount,
       topicStats,
+      heatmap: heatmapData,
       lastSubmissionIndex,
       lastSyncedAt: new Date(),
     },
@@ -67,32 +68,40 @@ export const normalSyncCodeforces = async ({ userId, handle }) => {
   const {
     totalSolvedCount,
     topicStats,
+    heatmapData
   } = countTopicWise(submissions);
   console.log("total",totalSolvedCount)
   // Increment existing values
+  const incUpdates = {
+    totalSolved: totalSolvedCount,
+    "topicStats.Array": topicStats.Array,
+    "topicStats.DP": topicStats.DP,
+    "topicStats.Graph": topicStats.Graph,
+    "topicStats.Tree": topicStats.Tree,
+    "topicStats.Greedy": topicStats.Greedy,
+    "topicStats.String": topicStats.String,
+    "topicStats.Math": topicStats.Math,
+    "topicStats.Other": topicStats.Other,
+  };
+
+  // 🌟 Loop through the new heatmap data and tell MongoDB to increment those specific timestamps!
+  for (const [timestamp, count] of Object.entries(heatmapData)) {
+    incUpdates[`heatmap.${timestamp}`] = count;
+  }
+
   await UserPlatform.updateOne(
     { user: userId, platform: "Codeforces" },
     {
-      $inc: {
-        totalSolved: totalSolvedCount,
-        "topicStats.Array": topicStats.Array,
-        "topicStats.DP": topicStats.DP,
-        "topicStats.Graph": topicStats.Graph,
-        "topicStats.Tree": topicStats.Tree,
-        "topicStats.Greedy": topicStats.Greedy,
-        "topicStats.String": topicStats.String,
-        "topicStats.Math": topicStats.Math,
-        "topicStats.Other": topicStats.Other,
-      },
+      $inc: incUpdates, // 🌟 Pass the dynamic object here
       $set: {
         lastSubmissionIndex: newLastSubmissionIndex,
         lastSyncedAt: new Date(),
       },
     }
   );
-  console.log("done")
-  } catch (error) {
-    console.log("sync",error);
-  }
+  console.log("done");
+} catch (error) {
+  console.log("sync", error);
+}
 };
 

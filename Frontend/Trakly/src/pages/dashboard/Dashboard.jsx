@@ -15,7 +15,8 @@ import {
   updateLeetcodeData,  
   setLeetcodeHandle,
   setCodeforcesHandle,
-  setUserAnalysisData 
+  setUserAnalysisData ,
+  setCombinedAnalytics
 } from '../../store/profileSlice.js'; 
 
 const APP_NAME = import.meta.env.VITE_APP_NAME;
@@ -158,8 +159,30 @@ function Dashboard() {
       }
     };
 
+    const fetchCombinedAnalytics = async () => {
+      try {
+        const response = await fetch(`${BACKEND_URL}/analytics`, {
+          method: 'GET',
+          credentials: 'include',
+        });
+        
+        if (response.ok) {
+          const result = await response.json();
+          if (result.success) {
+            // result.data contains { heatmap: {}, topicStats: {} }
+            dispatch(setCombinedAnalytics(result.data));
+          }
+        }
+      } catch (error) {
+        console.error("Failed to fetch combined analytics.", error);
+      }
+    };
+    
+    
+    
     initiateSync();
     fetchExistingAnalysis();
+    fetchCombinedAnalytics();
   }, [dispatch]);
 
 
