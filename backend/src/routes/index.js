@@ -17,6 +17,7 @@ import { unlinkLeetCode } from "../controllers/platformController/leetcode/unlin
 import { unlinkAllPlatforms } from "../controllers/platformController/unlink.js"
 import { googleLogin } from "../controllers/UserController/googleLogin.js"
 import { getAnalyticsData } from "../controllers/platformController/getAnalytics.js"
+import { getLeetcodeDetails } from "../controllers/platformController/leetcode/getDetails.js"
 
 const router = express.Router()
 
@@ -38,7 +39,7 @@ router.delete("/delete-leetcode",auth,unlinkLeetCode)
 router.delete("/delete-codeforces",auth,unlinkCodeforces)
 router.delete("/delete-all",auth,unlinkAllPlatforms)
 router.get('/analytics',auth,getAnalyticsData)
-
+router.get('/get-leetcode',auth,getLeetcodeDetails)
 
 // SSE route for Codeforces sync status
 router.get("/codeforcesSse", auth, codeforcesSse);

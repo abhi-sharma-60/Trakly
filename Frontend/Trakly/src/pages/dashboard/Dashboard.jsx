@@ -1,5 +1,5 @@
 // src/pages/Dashboard.js
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
 import Sidebar from '../../components/Sidebar';
@@ -8,14 +8,13 @@ import AnalyticsDashboard from '../../components/AnalyticsDashboard';
 import ProfileSync from '../profilesync/ProfileSync';
 import CodeExecution from '../codeexecution/CodeExecution';
 
-// IMPORT updateLeetcodeData HERE
 import { 
   setInitialSyncData, 
   updateCodeforcesData, 
   updateLeetcodeData,  
   setLeetcodeHandle,
   setCodeforcesHandle,
-  setUserAnalysisData ,
+  setUserAnalysisData,
   setCombinedAnalytics
 } from '../../store/profileSlice.js'; 
 
@@ -32,7 +31,69 @@ function Dashboard() {
     setTimeout(() => setNotification(""), 5000);
   };
 
-  // --- Analysis Handler ---
+  // =========================================================================
+  // REUSABLE REFRESH & REDUX UPDATE LOGIC
+  // =========================================================================
+  
+  // 1. Refresh Heatmap/Topic Stats and Update Redux
+  const refreshAnalytics = useCallback(async () => {
+    try {
+      const response = await fetch(`${BACKEND_URL}/analytics`, {
+        method: 'GET',
+        credentials: 'include',
+      });
+      if (response.ok) {
+        const result = await response.json();
+        if (result.success) {
+          // REDUX UPDATE: Analytics state updated
+          dispatch(setCombinedAnalytics(result.data));
+        }
+      }
+    } catch (err) {
+      console.error("Failed to refresh combined analytics:", err);
+    }
+  }, [dispatch]);
+
+  // 2. Fetch Fresh LeetCode Details and Update Redux
+  const refreshLeetcodeData = useCallback(async () => {
+    try {
+      const response = await fetch(`${BACKEND_URL}/get-leetcode`, {
+        method: 'GET',
+        credentials: 'include'
+      });
+      if (response.ok) {
+        const data = await response.json();
+        const payload = data.data ? data.data : data;
+        // REDUX UPDATE: Leetcode profile state updated
+        dispatch(updateLeetcodeData(payload));
+      }
+    } catch (err) {
+      console.error("Error refreshing LeetCode data:", err);
+    }
+  }, [dispatch]);
+
+  // 3. Fetch Fresh Codeforces Details and Update Redux
+  const refreshCodeforcesData = useCallback(async () => {
+    try {
+      const response = await fetch(`${BACKEND_URL}/get-codeforces`, {
+        method: 'GET',
+        credentials: 'include'
+      });
+      if (response.ok) {
+        const data = await response.json();
+        const payload = data.data ? data.data : data;
+        // REDUX UPDATE: Codeforces profile state updated
+        dispatch(updateCodeforcesData(payload));
+      }
+    } catch (err) {
+      console.error("Error refreshing Codeforces data:", err);
+    }
+  }, [dispatch]);
+
+  // =========================================================================
+  // HANDLERS
+  // =========================================================================
+
   const handleGenerateAnalysis = async () => {
     showNotification("Generating AI Analysis... this may take a moment.");
     try {
@@ -40,7 +101,6 @@ function Dashboard() {
         method: 'GET',
         credentials: 'include',
       });
-
       const data = await response.json();
 
       if (response.ok) {
@@ -58,7 +118,6 @@ function Dashboard() {
     }
   };
 
-  // --- Manual Sync Handlers ---
   const handleSyncLeetCode = async () => {
     showNotification("Starting LeetCode sync...");
     try {
@@ -68,15 +127,9 @@ function Dashboard() {
       });
       
       if (response.ok) {
-        // 1. Parse the new data from the backend response
-        const lcData = await response.json();
-        console.log(response)
-        // 2. Extract the actual data payload (handles APIs that wrap in { data: {...} })
-        const payloadData = lcData.data ? lcData.data : lcData;
-        
-        // 3. Update Redux instantly
-        dispatch(updateLeetcodeData(payloadData));
-        
+        // Step 1: Backend sync successful, now fetch fresh data for UI
+        await refreshLeetcodeData(); // Updates Redux LeetCode
+        await refreshAnalytics();    // Updates Redux Analytics (Charts/Heatmap)
         showNotification("LeetCode synced successfully!");
       } else {
         showNotification("Failed to sync LeetCode.");
@@ -96,7 +149,7 @@ function Dashboard() {
       });
       if (response.ok) {
         showNotification("Codeforces sync queued...");
-        // Note: Redux is updated automatically when the SSE listener hears "CF_SYNC_COMPLETED"
+        // NOTE: SSE listener handle karega naya data jab backend sync finish karega
       } else {
         showNotification("Failed to queue Codeforces sync.");
       }
@@ -106,13 +159,12 @@ function Dashboard() {
   };
 
   // =========================================================================
-  // EFFECT 1: Fetch Initial Data (Guarded by hasInitialized)
+  // INITIAL DATA LOAD
   // =========================================================================
   useEffect(() => {
     if (hasInitialized.current) return;
     hasInitialized.current = true;
 
-    // 1. Fetch initial platform sync data
     const initiateSync = async () => {
       try {
         const response = await fetch(`${BACKEND_URL}/sync`, {
@@ -137,14 +189,12 @@ function Dashboard() {
       }
     };
 
-    // 2. Fetch existing AI Analysis data
     const fetchExistingAnalysis = async () => {
       try {
         const response = await fetch(`${BACKEND_URL}/analysis`, {
           method: 'GET',
           credentials: 'include',
         });
-        
         if (response.ok) {
           const data = await response.json();
           if (data.analysis) {
@@ -158,56 +208,23 @@ function Dashboard() {
         console.error("Failed to fetch existing analysis.", error);
       }
     };
-
-    const fetchCombinedAnalytics = async () => {
-      try {
-        const response = await fetch(`${BACKEND_URL}/analytics`, {
-          method: 'GET',
-          credentials: 'include',
-        });
-        
-        if (response.ok) {
-          const result = await response.json();
-          if (result.success) {
-            // result.data contains { heatmap: {}, topicStats: {} }
-            dispatch(setCombinedAnalytics(result.data));
-          }
-        }
-      } catch (error) {
-        console.error("Failed to fetch combined analytics.", error);
-      }
-    };
-    
-    
     
     initiateSync();
     fetchExistingAnalysis();
-    fetchCombinedAnalytics();
-  }, [dispatch]);
-
+    refreshAnalytics(); 
+  }, [dispatch, refreshAnalytics]);
 
   // =========================================================================
-  // EFFECT 2: Manage SSE Connection (Un-guarded so it survives Strict Mode)
+  // SSE FOR ASYNC CODEFORCES UPDATES
   // =========================================================================
   useEffect(() => {
     const sse = new EventSource(`${BACKEND_URL}/codeforcesSse`, { withCredentials: true });
     
-    sse.addEventListener("CF_SYNC_COMPLETED", async (event) => {
+    sse.addEventListener("CF_SYNC_COMPLETED", async () => {
       showNotification("Codeforces sync completed! Updating your profile...");
-      try {
-        const cfResponse = await fetch(`${BACKEND_URL}/get-codeforces`, { 
-          method: 'GET', 
-          credentials: 'include' 
-        });
-        
-        if (cfResponse.ok) {
-          const cfData = await cfResponse.json();
-          const payloadData = cfData.data ? cfData.data : cfData;
-          dispatch(updateCodeforcesData(payloadData));
-        }
-      } catch (err) { 
-        console.error("Error fetching updated Codeforces data:", err); 
-      }
+      // Fetch fresh CF data and updated analytics, then update Redux
+      await refreshCodeforcesData();
+      await refreshAnalytics();
     });
 
     sse.onerror = (err) => {
@@ -218,12 +235,12 @@ function Dashboard() {
     return () => {
       sse.close();
     };
-  }, [dispatch]);
+  }, [dispatch, refreshCodeforcesData, refreshAnalytics]);
 
   return (
     <div className="flex h-screen bg-gray-100 relative">
       {notification && (
-        <div className="absolute top-4 right-4 z-50 bg-green-600 text-white px-6 py-3 rounded-md shadow-lg">
+        <div className="absolute top-4 right-4 z-50 bg-green-600 text-white px-6 py-3 rounded-md shadow-lg transition-opacity">
           {notification}
         </div>
       )}
@@ -259,7 +276,7 @@ function Dashboard() {
         </main>
         
         <footer className="flex justify-between items-center p-4 bg-white border-t text-xs text-gray-500">
-          <p>© 2025 {APP_NAME}. All rights reserved.</p>
+          <p>© 2026 {APP_NAME}. All rights reserved.</p>
         </footer>
       </div>
     </div>
