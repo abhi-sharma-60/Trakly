@@ -53,11 +53,12 @@ export const googleLogin = async (req, res) => {
     // 5. Save the refresh token in the database
     user.refreshToken = refreshToken;
     await user.save({ validateBeforeSave: false });
+    const isLocalhost = process.env.environment === "localhost";
     const cookieOptions = {
-      httpOnly : true,
-      secure : false,
-      sameSite: "Lax",
-  }
+        httpOnly: true, 
+        secure: !isLocalhost,                  // true in production (requires HTTPS), false locally
+        sameSite: isLocalhost ? "Lax" : "None" // "Lax" for local HTTP, "None" for cross-site production
+    };
     // 6. Send the response back to the client
     // (You might want to set the refresh token in an HTTP-only cookie here if you are doing that for normal login)
     return res
