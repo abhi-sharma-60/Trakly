@@ -171,6 +171,7 @@ function Dashboard() {
           method: 'GET',
           credentials: 'include', 
         });
+        console.log(response)
         if (response.ok) {
           const data = await response.json();
           dispatch(setInitialSyncData({ 
