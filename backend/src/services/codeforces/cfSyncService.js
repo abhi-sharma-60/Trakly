@@ -52,7 +52,7 @@ export const normalSyncCodeforces = async ({ userId, handle }) => {
     return;
   }
 
-  const from = cfStat.lastSubmissionIndex + 1;
+  const from = cfStat.lastSubmissionIndex+1;
 
   // Fetch only NEW submissions
   const submissions = await fetchUserSubmissions(handle, from, 50);

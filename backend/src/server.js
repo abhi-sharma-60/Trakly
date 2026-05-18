@@ -4,7 +4,7 @@ import dotenv from 'dotenv'
 import connectDB from './db/index.js'
 import router from './routes/index.js'
 import cookieParser from "cookie-parser"
-import { startCodeforcesWorker } from './workers/cf.worker.js'
+//import { startCodeforcesWorker } from './workers/cf.worker.js'
 
 dotenv.config({
     path:'./.env'
@@ -28,6 +28,6 @@ app.use('',router)
 connectDB().then(()=>{
     console.log("Database connected!")
     app.listen(PORT,()=>{console.log(`server running at ${PORT}...`)
-    startCodeforcesWorker();
+    //startCodeforcesWorker();
     })
 })

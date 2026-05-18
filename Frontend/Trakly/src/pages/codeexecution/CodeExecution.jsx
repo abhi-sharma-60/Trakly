@@ -90,11 +90,11 @@ function CodeEditor() {
   }, [language, code, input]);
 
   const getPistonConfig = () => {
-    if (language === "cpp")
-      return { language: "cpp", version: "10.2.0", filename: "main.cpp" };
+    if (language === "c++")
+      return { language: "c++", version: "*", filename: "main.cpp" };
     if (language === "python")
-      return { language: "python", version: "3.10.0", filename: "main.py" };
-    return { language: "java", version: "15.0.2", filename: "Main.java" };
+      return { language: "python", version: "*", filename: "main.py" };
+    return { language: "java", version: "*", filename: "Main.java" };
   };
 
   const handleRunCode = async () => {
@@ -114,6 +114,18 @@ function CodeEditor() {
       });
 
       const data = await res.json();
+
+      if (!res.ok) {
+        setOutput(`API Error: ${data.message || res.statusText}`);
+        return;
+      }
+
+      // FIX 2: Catch Compilation Errors (Crucial for C++ and Java)
+      if (data.compile && data.compile.code !== 0) {
+        setOutput(`Compilation Error:\n${data.compile.stderr}`);
+        return;
+      }
+
       const stdout = data.run?.stdout || "";
       const stderr = data.run?.stderr || "";
       setOutput(stderr.trim() ? stderr : stdout || "No output");
