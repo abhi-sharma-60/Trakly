@@ -36,12 +36,12 @@ const login = async (req, res) => {
         const accessToken = await user.generateAccessToken();
         const refreshToken = await user.generateRefreshToken();
         const token = await user.generateAccessToken()
-
+        const isLocalhost = process.env.environment === "localhost";
         const cookieOptions = {
-            httpOnly : true,
-            secure : false,
-            sameSite: "Lax",
-        }
+            httpOnly: true, 
+            secure: !isLocalhost,                  // true in production (requires HTTPS), false locally
+            sameSite: isLocalhost ? "Lax" : "None" // "Lax" for local HTTP, "None" for cross-site production
+        };
 
         // 5. Save refresh token in DB
         user.refreshToken = refreshToken;

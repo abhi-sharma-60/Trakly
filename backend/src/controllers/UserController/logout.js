@@ -12,12 +12,12 @@ export const logout = async (req, res) => {
         $unset: { refreshToken: 1 }
       });
     }
-
+    const isLocalhost = process.env.environment === "localhost";
     // 3. Clear cookie
     res.clearCookie("token", {
-      httpOnly: true,
-      secure: false,      // true in production
-      sameSite: "Lax"
+      httpOnly: true, 
+      secure: !isLocalhost,                  // true in production (requires HTTPS), false locally
+      sameSite: isLocalhost ? "Lax" : "None"
     });
 
     // 4. Send response
