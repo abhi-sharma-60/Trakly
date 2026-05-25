@@ -1,181 +1,52 @@
-# 🚀 Trakly — Competitive Programming Analytics Platform
+# 📊 Trakly - Competitive Programming Analytics Platform
 
-<div align="center">
-
-### 📊 Track • Analyze • Improve • Repeat
-
-An AI-powered full-stack analytics dashboard for competitive programmers that aggregates coding statistics, visualizes consistency, and generates personalized practice recommendations using LLMs.
-
-🌐 **Live Demo:** https://trakly-v2fs.onrender.com/  
-📂 **Repository:** https://github.com/abhi-sharma-60/Trakly
-
-</div>
+Trakly is a full-stack, AI-powered analytics dashboard engineered for competitive programmers. It aggregates user statistics across multiple coding platforms to provide a unified view of performance, consistency, and skill progression. Beyond basic metric tracking, Trakly leverages Large Language Models (LLMs) to autonomously analyze a user's coding patterns and generate targeted, topic-specific practice recommendations.
 
 ---
 
-# ✨ Overview
+## 🚀 Key Features
 
-**Trakly** is a modern competitive programming analytics platform designed to help programmers monitor their growth across multiple coding platforms in one unified dashboard.
-
-Instead of manually checking profiles across different websites, Trakly automatically aggregates data from platforms like Codeforces and LeetCode, analyzes performance trends, and uses AI to recommend what topics to practice next.
-
-The platform is engineered with scalability and real-time responsiveness in mind using asynchronous workers, Redis queues, and SSE-based live updates.
-
----
-
-# 🚀 Features
-
-## 🔗 Multi-Platform Integration
-
-- Connect and disconnect coding profiles securely.
-- Supports:
-  - Codeforces
-  - LeetCode
-- Aggregates historical submission data from all linked platforms.
+* **Multi-Platform Integration:** Securely link and unlink Codeforces and LeetCode profiles to aggregate historical submission data.
+* **Unified Analytics Engine:** Aggregates total problem counts and generates detailed topic-wise breakdowns to visualize proficiency across different algorithms and data structures.
+* **Consistency Heatmap:** Displays a GitHub-style daily activity heatmap reflecting problems solved across all linked platforms on any given day.
+* **AI-Powered Performance Analysis:** Leverages the **Google Gemini API** to analyze aggregated data, autonomously identifying the user's distinct strong and weak topics.
+* **Smart Problem Recommendation:** Dynamically queries the database to serve a curated, deduplicated "Practice Plan" targeting the user's identified weak areas at an appropriate difficulty rating.
 
 ---
 
-## 📈 Unified Analytics Dashboard
+## 🛠️ Tech Stack
 
-- Total solved problems across platforms.
-- Topic-wise breakdown of:
-  - Dynamic Programming
-  - Graphs
-  - Trees
-  - Greedy
-  - Binary Search
-  - And many more...
-- Performance visualization for algorithmic strengths and weaknesses.
+| Layer | Technologies Used |
+| :--- | :--- |
+| **Frontend** | React.js, Redux Toolkit, Tailwind CSS |
+| **Backend** | Node.js, Express.js |
+| **Database** | MongoDB (Mongoose ODM) |
+| **Infrastructure & Queues** | Redis, BullMQ |
+| **AI Integration** | Google Gemini API |
 
 ---
 
-## 🔥 Consistency Heatmap
+## 🧠 System Architecture & Engineering Highlights
 
-- GitHub-style activity heatmap.
-- Tracks daily problem-solving consistency.
-- Combines submissions from all connected platforms.
+Trakly is engineered to handle heavy data ingestion asynchronously without degrading user experience or blocking the primary application thread.
 
----
-
-## 🤖 AI-Powered Performance Analysis
-
-Uses the Gemini API to:
-
-- Analyze coding patterns
-- Detect weak and strong topics
-- Generate actionable insights
-- Suggest improvement strategies automatically
+* **Asynchronous Background Processing:** Fetching thousands of historical submissions synchronously would block the Node.js event loop. Data synchronization is entirely offloaded to a separate background worker process utilizing **Redis** and **BullMQ**.
+* **Real-Time Streaming with SSE:** Instead of relying on inefficient, network-heavy client polling to check if background syncs are complete, the architecture implements **Server-Sent Events (SSE)** to stream live job completion statuses directly to the React frontend.
+* **Fault-Tolerant Data Ingestion:** The worker loop is designed defensively, incorporating rate-limiting logic to strictly adhere to third-party API constraints (e.g., Codeforces' 1 request/2 seconds limit), effectively preventing IP bans during mass data syncs.
+* **Optimized Database Queries:** Recommendation generation utilizes MongoDB's `$nin` operator for database-level exclusion, drastically improving performance by preventing the in-memory processing of duplicate problems.
 
 ---
 
-## 🎯 Smart Problem Recommendations
+## ⚙️ Local Setup & Installation
 
-- Personalized "Practice Plan" generation
-- AI-driven topic targeting
-- Difficulty-aware recommendations
-- Deduplicated problem suggestions using optimized database queries
+Follow these steps to get a local copy of Trakly up and running.
 
----
+### Prerequisites
+* Node.js (v16.x or higher)
+* MongoDB (Local instance or Atlas URI)
+* Redis (Running locally or via a cloud provider on port `6379`)
 
-# 🛠️ Tech Stack
-
-## 🎨 Frontend
-
-- React.js
-- Redux Toolkit
-- Tailwind CSS
-
----
-
-## ⚙️ Backend
-
-- Node.js
-- Express.js
-
----
-
-## 🗄️ Database
-
-- MongoDB
-- Mongoose
-
----
-
-## 🚦 Infrastructure & Queues
-
-- Redis
-- BullMQ
-
----
-
-## 🧠 AI Integration
-
-- Google Gemini API
-
----
-
-# 🧠 System Architecture & Engineering Highlights
-
-## ⚡ Asynchronous Background Processing
-
-Fetching thousands of submissions synchronously would block the Node.js event loop and severely degrade performance.
-
-To solve this:
-
-- Submission synchronization is offloaded to dedicated background workers
-- Powered by Redis queues and BullMQ workers
-- Ensures a smooth and responsive frontend experience
-
----
-
-## 📡 Real-Time Streaming with SSE
-
-Instead of inefficient client-side polling:
-
-- Implemented **Server-Sent Events (SSE)** for real-time communication
-- Streams live sync progress directly to the frontend
-- Provides instant job completion updates
-
----
-
-## 🛡️ Fault-Tolerant Data Ingestion
-
-Designed defensively to handle third-party API constraints safely.
-
-### Includes:
-
-- Rate limiting
-- Retry handling
-- Queue-based processing
-- Controlled synchronization pipelines
-
-Example:
-
-- Adheres strictly to Codeforces API constraints (1 request / 2 seconds) to avoid bans
-
----
-
-## 🚀 Optimized Database Queries
-
-Recommendation generation uses MongoDB query optimization techniques such as:
-
-- `$nin` operator for exclusion
-- Database-level deduplication
-- Reduced in-memory filtering
-- Faster recommendation pipelines
-
----
-
-# 📂 Project Structure
-
+### 1. Clone the Repository
 ```bash
-Trakly/
-│
-├── client/          # React Frontend
-├── server/          # Express Backend
-├── workers/         # BullMQ Workers
-├── models/          # Mongoose Schemas
-├── routes/          # API Routes
-├── controllers/     # Business Logic
-├── redux/           # Redux State Management
-└── utils/           # Helper Functions
+git clone [https://github.com/abhi-sharma-60/trakly.git](https://github.com/yourusername/trakly.git)
+cd trakly
